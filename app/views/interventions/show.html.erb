@@ -1,0 +1,27 @@
+<div class="flex justify-between items-start mb-6">
+  <div>
+    <h1 class="text-xl font-semibold"><%= @intervention.site_name %></h1>
+    <p class="text-slate-500 text-sm"><%= @intervention.technician.name %> · <%= @intervention.technician.phone %></p>
+  </div>
+  <%= render "interventions/status_badge", intervention: @intervention %>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-lg p-4 mb-6">
+  <p class="font-medium mb-2">Timeline</p>
+  <ul class="text-sm space-y-1 text-slate-600">
+    <li>Scheduled: <%= @intervention.scheduled_at&.strftime("%b %-d, %H:%M") %></li>
+    <li>Started: <%= @intervention.started_at&.strftime("%b %-d, %H:%M") || "—" %></li>
+    <li>Completed: <%= @intervention.completed_at&.strftime("%b %-d, %H:%M") || "—" %></li>
+  </ul>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-lg p-4 mb-6">
+  <p class="font-medium mb-2">Audit log</p>
+  <ul class="text-sm space-y-1 text-slate-600">
+    <% @audit_logs.each do |log| %>
+      <li><%= log.created_at.strftime("%H:%M:%S") %> — [<%= log.actor %>] <%= log.event_type.humanize %></li>
+    <% end %>
+  </ul>
+</div>
+
+<%= link_to "← Back to Tracking", tracking_interventions_path, class: "text-sm text-blue-600 hover:underline" %>

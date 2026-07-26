@@ -1,0 +1,13 @@
+<h1 class="text-xl font-semibold mb-6">In Progress</h1>
+
+<%= turbo_stream_from "interventions" %>
+
+<% if @interventions.empty? %>
+  <p class="text-slate-500 text-sm">No interventions currently in progress.</p>
+<% else %>
+  <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <% @interventions.each do |intervention| %>
+      <%= render "interventions/card", intervention: intervention %>
+    <% end %>
+  </div>
+<% end %>

@@ -1,0 +1,20 @@
+<h1 class="text-xl font-semibold mb-6">Add a technician</h1>
+
+<%= form_with model: @technician, class: "max-w-lg space-y-4" do |f| %>
+  <div>
+    <label class="block text-sm font-medium mb-1">Name</label>
+    <%= f.text_field :name, class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Phone (with country code)</label>
+    <%= f.text_field :phone, placeholder: "+33...", class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+  </div>
+
+  <div class="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-800">
+    After saving, you'll need to separately confirm that this technician has
+    been informed and consents to receiving AI-initiated phone calls and
+    texts. No call will be placed to them until that consent is confirmed.
+  </div>
+
+  <%= f.submit "Save technician", class: "bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700" %>
+<% end %>

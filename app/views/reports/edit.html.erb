@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Your intervention report</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+</head>
+<body class="bg-slate-50">
+  <div class="max-w-md mx-auto px-5 py-8">
+    <h1 class="text-lg font-semibold mb-1">Review your report</h1>
+    <p class="text-sm text-slate-500 mb-6">
+      This is what we captured from your call for
+      <%= @call.intervention.site_name %>. Edit anything that's wrong and add
+      photos if you'd like, then confirm below.
+    </p>
+
+    <%= form_with model: @call, url: report_path(token: @call.edit_token), method: :patch,
+          local: true, class: "space-y-4" do |f| %>
+      <div>
+        <label class="block text-sm font-medium mb-1">Work completed</label>
+        <%= f.text_area :work_completed, rows: 3, class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Equipment used</label>
+        <%= f.text_area :equipment_used, rows: 2, class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Anomalies (if any)</label>
+        <%= f.text_area :anomalies, rows: 2, class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+      </div>
+      <div class="flex items-center gap-2">
+        <%= f.check_box :is_anomaly_severe %>
+        <label class="text-sm">This anomaly is severe / needs urgent attention</label>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Recommendations</label>
+        <%= f.text_area :recommendations, rows: 2, class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Actual duration (minutes)</label>
+        <%= f.number_field :actual_duration_minutes, class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">Add photos</label>
+        <%= f.file_field :photos, multiple: true, accept: "image/*", class: "w-full text-sm" %>
+      </div>
+
+      <%= f.submit "Confirm my report", class: "w-full bg-blue-600 text-white py-2.5 rounded-md text-sm font-medium" %>
+    <% end %>
+  </div>
+</body>
+</html>

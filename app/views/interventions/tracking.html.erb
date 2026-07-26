@@ -1,0 +1,75 @@
+<div class="flex justify-between items-center mb-6">
+  <h1 class="text-xl font-semibold">Tracking</h1>
+  <%= link_to "Export CSV", export_interventions_path(format: :csv), class: "text-sm text-blue-600 hover:underline" %>
+</div>
+
+<%= turbo_stream_from "interventions" %>
+
+<%= form_with url: tracking_interventions_path, method: :get, class: "flex flex-wrap gap-3 mb-6" do %>
+  <%= text_field_tag :q, params[:q], placeholder: "Search site or technician…", class: "border border-slate-300 rounded-md px-3 py-1.5 text-sm" %>
+  <%= select_tag :status,
+        options_for_select(Intervention.statuses.keys.map { |s| [s.humanize, s] }, params[:status]),
+        include_blank: "All statuses", class: "border border-slate-300 rounded-md px-3 py-1.5 text-sm" %>
+  <button type="submit" class="bg-slate-900 text-white text-sm px-3 py-1.5 rounded-md">Filter</button>
+  <%= link_to "Reset", tracking_interventions_path, class: "text-sm text-slate-500 self-center" %>
+<% end %>
+
+<% if @interventions.empty? %>
+  <p class="text-slate-500 text-sm">No interventions match these filters.</p>
+<% else %>
+  <div class="space-y-3">
+    <% @interventions.each do |intervention| %>
+      <details class="bg-white border border-slate-200 rounded-lg p-4">
+        <summary class="cursor-pointer flex justify-between items-center">
+          <span>
+            <span class="font-semibold"><%= intervention.site_name %></span>
+            <span class="text-slate-500 text-sm ml-2"><%= intervention.technician.name %></span>
+          </span>
+          <%= render "interventions/status_badge", intervention: intervention %>
+        </summary>
+
+        <div class="mt-4 text-sm text-slate-700 space-y-3">
+          <p>Started: <%= intervention.started_at&.strftime("%b %-d, %H:%M") || "—" %> ·
+             Completed: <%= intervention.completed_at&.strftime("%b %-d, %H:%M") || "—" %> ·
+             Resolution: <%= intervention.resolution_time_minutes || "—" %> min</p>
+
+          <div>
+            <p class="font-medium mb-1">Call history</p>
+            <ul class="space-y-1">
+              <% intervention.calls.each do |call| %>
+                <li class="text-slate-600">
+                  <%= call.call_type.humanize %> (attempt <%= call.attempt %>) — <%= call.call_status %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+
+          <% report = intervention.calls.find { |c| c.call_type == "closing_report" } %>
+          <% if report %>
+            <div class="border-t border-slate-100 pt-3">
+              <p class="font-medium mb-1">Closing report (<%= report.report_status %>)</p>
+              <p><strong>Work completed:</strong> <%= report.work_completed %></p>
+              <p><strong>Equipment used:</strong> <%= report.equipment_used %></p>
+              <% if report.anomalies.present? %>
+                <p><strong>Anomalies:</strong> <%= report.anomalies %> (severe: <%= report.is_anomaly_severe? ? "yes" : "no" %>)</p>
+                <p><strong>Recommendations:</strong> <%= report.recommendations %></p>
+              <% end %>
+              <% if report.photos.attached? %>
+                <div class="flex gap-2 mt-2">
+                  <% report.photos.each do |photo| %>
+                    <%= image_tag photo, class: "w-20 h-20 object-cover rounded-md border" %>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+
+          <% if intervention.status.in?(%w[action_required call_failed no_show]) %>
+            <%= button_to "Mark resolved", resolve_intervention_path(intervention), method: :post,
+                  class: "text-sm bg-slate-900 text-white px-3 py-1.5 rounded-md" %>
+          <% end %>
+        </div>
+      </details>
+    <% end %>
+  </div>
+<% end %>

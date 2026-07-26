@@ -1,0 +1,26 @@
+<h1 class="text-xl font-semibold mb-6">Audit Log</h1>
+
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-500 text-left">
+      <tr>
+        <th class="px-4 py-2">Time</th>
+        <th class="px-4 py-2">Actor</th>
+        <th class="px-4 py-2">Event</th>
+        <th class="px-4 py-2">Intervention</th>
+        <th class="px-4 py-2">Technician</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @audit_logs.each do |log| %>
+        <tr class="border-t border-slate-100">
+          <td class="px-4 py-2 text-slate-500"><%= log.created_at.strftime("%b %-d, %H:%M:%S") %></td>
+          <td class="px-4 py-2"><%= log.actor %></td>
+          <td class="px-4 py-2"><%= log.event_type.humanize %></td>
+          <td class="px-4 py-2"><%= log.intervention&.site_name || "—" %></td>
+          <td class="px-4 py-2"><%= log.technician&.name || "—" %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

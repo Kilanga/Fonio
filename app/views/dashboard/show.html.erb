@@ -1,0 +1,29 @@
+<h1 class="text-xl font-semibold mb-6">Dashboard</h1>
+
+<div class="grid gap-4 md:grid-cols-3 mb-8">
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <p class="text-sm text-slate-500">Average resolution time</p>
+    <p class="text-2xl font-semibold"><%= @avg_resolution_minutes ? "#{@avg_resolution_minutes} min" : "—" %></p>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <p class="text-sm text-slate-500">Severe anomaly rate</p>
+    <p class="text-2xl font-semibold"><%= @anomaly_rate %>%</p>
+    <p class="text-xs text-slate-400"><%= @severe_anomaly_count %> of <%= @total_reports %> reports</p>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <p class="text-sm text-slate-500">Total interventions</p>
+    <p class="text-2xl font-semibold"><%= @status_counts.values.sum %></p>
+  </div>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-lg p-4">
+  <p class="font-medium mb-3">By status</p>
+  <ul class="space-y-2">
+    <% @status_counts.each do |status, count| %>
+      <li class="flex justify-between text-sm">
+        <span><%= status.humanize %></span>
+        <span class="font-medium"><%= count %></span>
+      </li>
+    <% end %>
+  </ul>
+</div>
