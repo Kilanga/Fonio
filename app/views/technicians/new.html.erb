@@ -9,6 +9,19 @@
     <label class="block text-sm font-medium mb-1">Phone (with country code)</label>
     <%= f.text_field :phone, placeholder: "+33...", class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
   </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Region</label>
+    <%= f.select :region, CallESupportedRegions.region_codes, { prompt: "Select a region" }, class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+    <p class="text-xs text-slate-500 mt-1">
+      CALL-E only supports a fixed list of recipient regions, each tied to
+      specific spoken language(s) — this isn't free-form language detection.
+    </p>
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Locale</label>
+    <%= f.text_field :locale, placeholder: "e.g. fr-FR", class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+    <p class="text-xs text-slate-500 mt-1">Must match one of the locales available for the selected region.</p>
+  </div>
 
   <div class="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-800">
     After saving, you'll need to separately confirm that this technician has

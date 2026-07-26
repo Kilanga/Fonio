@@ -1,23 +1,15 @@
-# Builds the structured "goal" prompt sent to CALL-E for each call type.
-# These encode the decision trees defined in SPEC.md section 6, plus the
-# language-handling instruction from section 6bis (conversation adapts to
-# the technician's language; structured result always comes back in English).
+# Builds the "task" prompt and "result_schema" (JSON Schema) sent to CALL-E
+# for each call type, per the real API contract:
+# https://github.com/CALLE-AI/call-e-integrations
+#
+# CALL-E's conversation language is tied to the recipient's region/locale
+# (see CallESupportedRegions) — there is no free-form "detect any language"
+# instruction to give it. The task prompt below only needs to state the
+# call's purpose in English; CALL-E handles localizing the conversation
+# itself based on the recipient's locale.
 module CallScripts
-  LANGUAGE_INSTRUCTION = <<~TEXT.freeze
-    Conduct the conversation in whatever language the technician speaks —
-    detect it and adapt naturally. Regardless of the conversation language,
-    always return the structured result entirely in English.
-  TEXT
-
-  RESULT_SCHEMA_NOTE = <<~TEXT.freeze
-    If the person doesn't answer, note the call as unanswered rather than
-    guessing at values. Be concise and outcome-focused, per CALL-E best
-    practice: state who you are, the goal of the call, and what to do if
-    the person can't talk right now.
-  TEXT
-
   def self.check_in(intervention)
-    <<~GOAL
+    task = <<~TASK
       Call #{intervention.technician.name} to check in on their field
       intervention at #{intervention.site_name}.
 
@@ -33,18 +25,31 @@ module CallScripts
            need help, ask what they need. If not, ask whether they still expect
            to finish on time and record a revised ETA if not.
 
-      Return a structured result with: has_started (bool), has_issue (bool),
-      issue_type (string, if any), severity (low/medium/blocking, if any),
-      needs_help (bool), help_needed_description (string, if any),
-      revised_eta (datetime, if any).
+      If the person doesn't answer, don't guess at any values.
+    TASK
 
-      #{LANGUAGE_INSTRUCTION}
-      #{RESULT_SCHEMA_NOTE}
-    GOAL
+    { task: task, result_schema: check_in_result_schema }
+  end
+
+  def self.check_in_result_schema
+    {
+      type: "object",
+      required: ["has_started", "has_issue"],
+      properties: {
+        has_started: { type: "boolean" },
+        has_issue: { type: "boolean" },
+        issue_type: { type: "string", enum: ["equipment", "site_access", "technical", "other", "none"] },
+        severity: { type: "string", enum: ["low", "medium", "blocking", "none"] },
+        needs_help: { type: "boolean" },
+        help_needed_description: { type: "string" },
+        revised_eta: { type: "string", format: "date-time" }
+      },
+      additionalProperties: false
+    }
   end
 
   def self.closing_report(intervention)
-    <<~GOAL
+    task = <<~TASK
       Call #{intervention.technician.name} to collect their closing report
       for the field intervention at #{intervention.site_name}, which they
       just signaled as finished.
@@ -59,26 +64,35 @@ module CallScripts
       5. Ask how long the intervention actually took, in minutes.
       6. Close by telling them they'll receive a text to review, edit, or add
          photos to their report if needed.
+    TASK
 
-      Return a structured result with: work_completed (string),
-      equipment_used (string), has_anomaly (bool), anomalies (string, if any),
-      is_anomaly_severe (bool, if any), recommendations (string, if any),
-      actual_duration_minutes (integer).
+    { task: task, result_schema: closing_report_result_schema }
+  end
 
-      #{LANGUAGE_INSTRUCTION}
-      #{RESULT_SCHEMA_NOTE}
-    GOAL
+  def self.closing_report_result_schema
+    {
+      type: "object",
+      required: ["work_completed", "equipment_used", "has_anomaly"],
+      properties: {
+        work_completed: { type: "string" },
+        equipment_used: { type: "string" },
+        has_anomaly: { type: "boolean" },
+        anomalies: { type: "string" },
+        is_anomaly_severe: { type: "boolean" },
+        recommendations: { type: "string" },
+        actual_duration_minutes: { type: "integer" }
+      },
+      additionalProperties: false
+    }
   end
 
   def self.daily_summary(date, interventions)
     completed = interventions.select { |i| i.status == "completed" }
     flagged   = interventions.select { |i| %w[action_required no_show call_failed].include?(i.status) }
 
-    flagged_lines = flagged.map do |i|
-      "- #{i.site_name} (#{i.technician.name}): #{i.status.humanize}"
-    end.join("\n")
+    flagged_lines = flagged.map { |i| "- #{i.site_name} (#{i.technician.name}): #{i.status.humanize}" }.join("\n")
 
-    <<~GOAL
+    task = <<~TASK
       Call the project manager with an evening summary for #{date.strftime('%B %-d')}.
 
       Report:
@@ -88,9 +102,19 @@ module CallScripts
 
       For each flagged item, state the site, technician, and reason in one
       sentence. Close by telling them full details are in their dashboard.
+    TASK
 
-      This call is to the PM, not a technician, so it should be conducted in
-      English throughout.
-    GOAL
+    { task: task, result_schema: daily_summary_result_schema }
+  end
+
+  def self.daily_summary_result_schema
+    {
+      type: "object",
+      required: ["acknowledged"],
+      properties: {
+        acknowledged: { type: "boolean" }
+      },
+      additionalProperties: false
+    }
   end
 end

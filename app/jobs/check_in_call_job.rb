@@ -19,10 +19,14 @@ class CheckInCallJob < ApplicationJob
       details: { call_type: "check_in", attempt: attempt }
     )
 
+    script = CallScripts.check_in(intervention)
+
     response = CallEClient.create_call(
-      to: intervention.technician.phone,
-      goal: CallScripts.check_in(intervention),
-      metadata: { intervention_id: intervention.id, call_id: call.id, attempt: attempt }
+      task: script[:task],
+      recipient: intervention.technician.call_e_recipient,
+      result_schema: script[:result_schema],
+      metadata: { intervention_id: intervention.id, call_id: call.id, attempt: attempt },
+      idempotency_key: "check_in_#{intervention.id}_attempt_#{attempt}"
     )
 
     call.update!(call_e_call_id: response["call_id"], call_status: "in_progress")

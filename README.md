@@ -23,19 +23,21 @@ rails db:create db:migrate db:seed
 Create a `.env` file (not committed) with:
 
 ```
-CALL_E_API_KEY=your_call_e_api_key
-CALL_E_API_BASE_URL=https://api.heycall-e.com
-CALL_E_WEBHOOK_URL=https://<your-public-url>/webhooks/call_e
+CALLE_API_KEY=your_call_e_api_key
+CALLE_BASE_URL=https://api.heycall-e.com
+CALLE_WEBHOOK_URL=https://<your-public-url>/webhooks/call_e
 TWILIO_ACCOUNT_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_token
 TWILIO_FROM_NUMBER=+1...
 PM_PHONE_NUMBER=+1...
+PM_REGION=FR
+PM_LOCALE=fr-FR
 APP_HOST=<your-public-url, no scheme>
 ```
 
 CALL-E's webhook and Twilio's inbound SMS webhook both need a **public URL**
 reachable from the internet — for local development, expose your app with
-`ngrok http 3000` (or similar) and use that URL for `CALL_E_WEBHOOK_URL` and
+`ngrok http 3000` (or similar) and use that URL for `CALLE_WEBHOOK_URL` and
 your Twilio number's configured webhook.
 
 Run **both** processes — the web server alone is not enough, since check-in
@@ -65,7 +67,7 @@ Visit `http://localhost:3000`.
 ```bash
 heroku create
 heroku addons:create heroku-postgresql
-heroku config:set CALL_E_API_KEY=... CALL_E_API_BASE_URL=... CALL_E_WEBHOOK_URL=... \
+heroku config:set CALLE_API_KEY=... CALLE_BASE_URL=... CALLE_WEBHOOK_URL=... \
   TWILIO_ACCOUNT_SID=... TWILIO_AUTH_TOKEN=... TWILIO_FROM_NUMBER=... \
   PM_PHONE_NUMBER=... APP_HOST=your-app.herokuapp.com
 git push heroku main

@@ -27,6 +27,6 @@ class TechniciansController < ApplicationController
   private
 
   def technician_params
-    params.require(:technician).permit(:name, :phone)
+    params.require(:technician).permit(:name, :phone, :region, :locale)
   end
 end

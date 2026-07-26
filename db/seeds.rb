@@ -5,6 +5,8 @@
 
 technician = Technician.find_or_create_by!(phone: "+15550001111") do |t|
   t.name = "Alex Demo"
+  t.region = "US"
+  t.locale = "en-US"
 end
 technician.give_consent! unless technician.consent_given?
 

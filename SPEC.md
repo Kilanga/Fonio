@@ -183,23 +183,27 @@ structured-result schema.
 4. Close: "Full details are in your dashboard."
 ```
 
-## 6bis. Language handling
+## 6bis. Language handling (corrected against the real API contract)
 
-Technicians may be far more comfortable speaking a language other than French or English.
-CALL-E's own positioning states it adapts and sounds "localized to whoever it's speaking
-with," so the conversation itself can happen in the technician's language. The structured
-result, however, must always come back in English for the PM. This is enforced via explicit
-instruction in the `goal` prompt sent to CALL-E for both technician-facing call types:
+**Correction from initial assumption**: CALL-E does not offer free-form
+"detect and adapt to any language" behavior. The real API contract
+(`POST /v1/calls`) ties conversation language to a fixed list of supported
+recipient regions, each with one or two specific languages — see
+`app/models/concerns/call_e_supported_regions.rb` for the full list (17
+regions as of Phase 1 beta, e.g. `FR` -> French, `DE` -> English/German,
+`IN` -> English/Hindi).
 
-```
-Conduct the conversation in whatever language the technician speaks — detect it and
-adapt naturally. Regardless of the conversation language, always return the structured
-result entirely in English.
-```
-
-This should be verified early with a real test call in a non-English language, since it's a
-specific behavior to confirm rather than a given API guarantee. Any inconsistency found here
-is also a good candidate for the "Most Valuable Feedback" hackathon prize.
+Practical implications:
+- Each `Technician` must have a `region` and a `locale` valid for that
+  region (enforced by model validation).
+- A technician whose preferred spoken language isn't tied to their region
+  code cannot be accommodated by CALL-E today — this is a real product
+  limitation worth flagging to the CALL-E team as feedback (see the
+  hackathon's "Most Valuable Feedback" prize), not something to route
+  around in our own code.
+- The `task` prompt sent to CALL-E doesn't need a "detect the language"
+  instruction — the platform localizes the conversation automatically based
+  on the recipient's region/locale.
 
 ## 7. Report editing (Kizeo-style)
 
@@ -215,6 +219,39 @@ PATCH /reports/:token
 If the technician doesn't act within 2 hours, the report auto-validates
 (`ValidateReportAutomaticallyJob`), and the intervention moves to `completed` or
 `action_required` depending on `is_anomaly_severe`.
+
+## 7bis. CALL-E API contract (verified, Phase 1 beta)
+
+Verified directly against https://github.com/CALLE-AI/call-e-integrations
+(README, "API (Preview / In Development)" section):
+
+```
+POST /v1/calls
+Authorization: Bearer $CALLE_API_KEY
+Idempotency-Key: <unique per logical call attempt>
+Content-Type: application/json
+
+{
+  "task": "<natural language goal>",
+  "recipient": { "phone": "+...", "region": "FR", "locale": "fr-FR" },
+  "result_schema": { <JSON Schema for the structured result> },
+  "metadata": { ... },
+  "webhook_url": "https://.../webhooks/call_e"
+}
+```
+
+Also available: `GET /v1/calls/{call_id}` (read state/results — useful as a
+polling fallback if a webhook is missed) and `GET /v1/calls/{call_id}/events`
+(list call events). Batch calls, scheduled calls, cancel calls, and
+project-level webhook management are explicitly out of scope for Phase 1 —
+consistent with our own architecture, which handles all scheduling
+(30-min wait, 5-min retry, 2h auto-validation) via our own ActiveJob/Solid
+Queue timers rather than relying on CALL-E to schedule anything.
+
+This corrects our earlier assumption of a `{ to, goal, metadata, webhook_url }`
+body — the real fields are `task` (not `goal`), a structured `recipient`
+object (not a flat phone string), and a required `result_schema`. See
+`app/services/call_e_client.rb` and `app/services/call_scripts.rb`.
 
 ## 8. Triggers and integrations
 

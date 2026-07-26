@@ -14,10 +14,14 @@ class ClosingReportCallJob < ApplicationJob
       details: { call_type: "closing_report" }
     )
 
+    script = CallScripts.closing_report(intervention)
+
     response = CallEClient.create_call(
-      to: intervention.technician.phone,
-      goal: CallScripts.closing_report(intervention),
-      metadata: { intervention_id: intervention.id, call_id: call.id }
+      task: script[:task],
+      recipient: intervention.technician.call_e_recipient,
+      result_schema: script[:result_schema],
+      metadata: { intervention_id: intervention.id, call_id: call.id },
+      idempotency_key: "closing_report_#{intervention.id}"
     )
 
     call.update!(call_e_call_id: response["call_id"], call_status: "in_progress")
