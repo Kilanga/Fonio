@@ -1,26 +1,36 @@
 <h1 class="text-xl font-semibold mb-6">Add a technician</h1>
 
-<%= form_with model: @technician, class: "max-w-lg space-y-4" do |f| %>
+<%= form_with model: @technician, class: "max-w-lg space-y-4", data: { controller: "technician-region" } do |f| %>
   <div>
     <label class="block text-sm font-medium mb-1">Name</label>
     <%= f.text_field :name, class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
   </div>
   <div>
     <label class="block text-sm font-medium mb-1">Phone (with country code)</label>
-    <%= f.text_field :phone, placeholder: "+33...", class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
-  </div>
-  <div>
-    <label class="block text-sm font-medium mb-1">Region</label>
-    <%= f.select :region, CallESupportedRegions.region_codes, { prompt: "Select a region" }, class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+    <%= f.text_field :phone, placeholder: "+33...",
+          data: { technician_region_target: "phone", action: "input->technician-region#suggestRegion" },
+          class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
     <p class="text-xs text-slate-500 mt-1">
-      CALL-E only supports a fixed list of recipient regions, each tied to
-      specific spoken language(s) — this isn't free-form language detection.
+      The region below is auto-suggested from the country code — check it's
+      correct, especially for shared codes like +1 (US/Canada).
     </p>
   </div>
   <div>
-    <label class="block text-sm font-medium mb-1">Locale</label>
-    <%= f.text_field :locale, placeholder: "e.g. fr-FR", class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
-    <p class="text-xs text-slate-500 mt-1">Must match one of the locales available for the selected region.</p>
+    <label class="block text-sm font-medium mb-1">Region (call routing)</label>
+    <%= f.select :region, CallESupportedRegions.region_codes, { prompt: "Select a region" },
+          data: { technician_region_target: "region", action: "change->technician-region#updateLocales" },
+          class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+    <p class="text-xs text-slate-500 mt-1">
+      CALL-E ties call routing to a fixed list of regions — this is tied to
+      the phone number's country code, separate from the spoken language.
+    </p>
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Spoken language</label>
+    <%= f.select :locale, [], { prompt: "Select a region first" },
+          data: { technician_region_target: "locale" },
+          class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+    <p class="text-xs text-slate-500 mt-1">The specific language CALL-E will speak on the call.</p>
   </div>
 
   <div class="bg-amber-50 border border-amber-200 rounded-md p-3 text-sm text-amber-800">
@@ -31,3 +41,7 @@
 
   <%= f.submit "Save technician", class: "bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700" %>
 <% end %>
+
+<script type="application/json" id="call-e-regions-data">
+  <%= raw CallESupportedRegions::REGIONS.transform_values { |v| v[:locales] }.to_json %>
+</script>
