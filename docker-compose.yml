@@ -2,8 +2,8 @@ services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_USER: fonio
-      POSTGRES_PASSWORD: fonio
+      POSTGRES_USER: ${POSTGRES_USER:-fonio}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fonio}
     volumes:
       - fonio_db_data:/var/lib/postgresql/data
     ports:
@@ -25,7 +25,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgres://fonio:fonio@db:5432/fonio_development
+      DATABASE_URL: postgres://${POSTGRES_USER:-fonio}:${POSTGRES_PASSWORD:-fonio}@db:5432/fonio_development
       RAILS_ENV: development
     env_file:
       - .env
@@ -42,7 +42,7 @@ services:
       - .:/rails
       - bundle_cache:/usr/local/bundle
     environment:
-      DATABASE_URL: postgres://fonio:fonio@db:5432/fonio_development
+      DATABASE_URL: postgres://${POSTGRES_USER:-fonio}:${POSTGRES_PASSWORD:-fonio}@db:5432/fonio_development
       RAILS_ENV: development
     env_file:
       - .env
