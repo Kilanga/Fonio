@@ -33,30 +33,6 @@ module CallESupportedRegions
     "KE" => { languages: ["en"], locales: ["en-KE"] }
   }.freeze
 
-  # E.164 country calling codes mapped to CALL-E region codes, for
-  # auto-suggesting a technician's region from their phone number. Only
-  # codes with a supported CALL-E region are listed. Some calling codes
-  # (e.g. +1) are shared by multiple countries (US/CA) and can't be
-  # disambiguated automatically — the PM can still override the suggestion.
-  CALLING_CODE_TO_REGION = {
-    "1" => "US",     # also covers CA; ambiguous, defaults to US
-    "65" => "SG",
-    "60" => "MY",
-    "91" => "IN",
-    "971" => "AE",
-    "61" => "AU",
-    "44" => "GB",
-    "84" => "VN",
-    "49" => "DE",
-    "81" => "JP",
-    "33" => "FR",
-    "52" => "MX",
-    "55" => "BR",
-    "62" => "ID",
-    "63" => "PH",
-    "254" => "KE"
-  }.freeze
-
   def self.region_codes
     REGIONS.keys
   end
@@ -67,13 +43,5 @@ module CallESupportedRegions
 
   def self.valid?(region, locale)
     locales_for(region).include?(locale)
-  end
-
-  # Best-effort guess only — always let the PM confirm/override in the UI.
-  def self.guess_region_from_phone(phone)
-    digits = phone.to_s.delete("^0-9")
-    # Try longest calling codes first (e.g. "971" before "1")
-    CALLING_CODE_TO_REGION.keys.sort_by { |c| -c.length }.find { |code| digits.start_with?(code) }
-      &.then { |code| CALLING_CODE_TO_REGION[code] }
   end
 end

@@ -3,7 +3,7 @@
     <div class="flex justify-between items-start">
       <div>
         <p class="font-semibold"><%= intervention.site_name %></p>
-        <p class="text-sm text-slate-500"><%= intervention.technician.name %> · <%= intervention.technician.phone %></p>
+        <p class="text-sm text-slate-500"><%= intervention.technician.name %> · <%= masked_phone(intervention.technician.phone) %></p>
       </div>
       <%= render "interventions/status_badge", intervention: intervention %>
     </div>
@@ -25,6 +25,11 @@
       <%= link_to "Details", intervention_path(intervention), class: "text-sm text-blue-600 hover:underline" %>
       <% if intervention.status.in?(%w[action_required call_failed no_show]) %>
         <%= button_to "Mark resolved", resolve_intervention_path(intervention), method: :post, class: "text-sm text-slate-500 hover:underline" %>
+      <% end %>
+      <% if intervention.in_progress? && intervention.calls.empty? %>
+        <%= button_to "Cancel", cancel_intervention_path(intervention), method: :post,
+              form: { data: { turbo_confirm: "Cancel this intervention? No check-in or closing call will be placed." } },
+              class: "text-sm text-red-600 hover:underline" %>
       <% end %>
     </div>
   </div>

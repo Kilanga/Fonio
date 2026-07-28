@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   resources :interventions, only: [:index, :new, :create, :show] do
     member do
       post :start
+      post :cancel
       post :resolve # PM marks action_required / call_failed / no_show as handled
     end
     collection do

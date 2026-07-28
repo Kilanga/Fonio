@@ -8,12 +8,7 @@
   <div>
     <label class="block text-sm font-medium mb-1">Phone (with country code)</label>
     <%= f.text_field :phone, placeholder: "+33...",
-          data: { technician_region_target: "phone", action: "input->technician-region#suggestRegion" },
           class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
-    <p class="text-xs text-slate-500 mt-1">
-      The region below is auto-suggested from the country code — check it's
-      correct, especially for shared codes like +1 (US/Canada).
-    </p>
   </div>
   <div>
     <label class="block text-sm font-medium mb-1">Region (call routing)</label>
@@ -21,8 +16,9 @@
           data: { technician_region_target: "region", action: "change->technician-region#updateLocales" },
           class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
     <p class="text-xs text-slate-500 mt-1">
-      CALL-E ties call routing to a fixed list of regions — this is tied to
-      the phone number's country code, separate from the spoken language.
+      Select explicitly — do not guess this from the phone number's country
+      code. Confirm with the technician which region/routing applies and
+      which language they actually want to speak on the call.
     </p>
   </div>
   <div>

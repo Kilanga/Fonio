@@ -8,7 +8,7 @@
     <div class="bg-white border border-slate-200 rounded-lg p-4 flex justify-between items-center">
       <div>
         <p class="font-semibold"><%= technician.name %></p>
-        <p class="text-sm text-slate-500"><%= technician.phone %></p>
+        <p class="text-sm text-slate-500"><%= masked_phone(technician.phone) %></p>
       </div>
       <% if technician.consent_given? %>
         <span class="text-sm text-green-700">Consent confirmed <%= technician.consent_given_at.strftime("%b %-d, %Y") %></span>
