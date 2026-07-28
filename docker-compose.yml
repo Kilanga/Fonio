@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fonio}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fonio}
+    volumes:
+      - fonio_db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fonio"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: bash -c "bin/rails db:prepare && bin/rails server -b 0.0.0.0"
+    volumes:
+      - .:/rails
+      - bundle_cache:/usr/local/bundle
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-fonio}:${POSTGRES_PASSWORD:-fonio}@db:5432/fonio_development
+      RAILS_ENV: development
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+
+  jobs:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: bin/jobs
+    volumes:
+      - .:/rails
+      - bundle_cache:/usr/local/bundle
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-fonio}:${POSTGRES_PASSWORD:-fonio}@db:5432/fonio_development
+      RAILS_ENV: development
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  fonio_db_data:
+  bundle_cache:
