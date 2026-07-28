@@ -1,3 +1,6 @@
+require "openssl"
+require "base64"
+
 module Webhooks
   # Receives structured results from CALL-E for all three call types
   # (check_in, closing_report, daily_summary), distinguished by the
@@ -8,6 +11,7 @@ module Webhooks
   # reflects our best assumption at build time.
   class CallEController < ApplicationController
     skip_before_action :verify_authenticity_token
+    before_action :verify_calle_signature!
 
     def create
       payload = params.to_unsafe_h
@@ -20,14 +24,58 @@ module Webhooks
       end
 
       head :ok
+    rescue ActiveRecord::RecordNotFound => e
+      # Unknown call_id — either a stale/replayed webhook or a spoofed one.
+      # Don't 500 (CALL-E would just retry forever); log and drop it.
+      Rails.logger.error("[webhooks/call_e] unknown record: #{e.message}")
+      head :ok
+    rescue StandardError => e
+      # CALL-E's contract is still a beta assumption (see note above) — a
+      # payload shape we didn't anticipate should never take the whole
+      # request down. Log loudly so it's caught in review, but still ack
+      # the webhook so the provider doesn't retry-storm us.
+      Rails.logger.error("[webhooks/call_e] unhandled error: #{e.class}: #{e.message}\n#{payload.inspect}")
+      head :ok
     end
 
     private
 
+    # Best-effort HMAC verification. CALL-E's exact webhook-signing scheme
+    # isn't confirmed in their public docs as of this beta — this assumes a
+    # shared-secret HMAC-SHA256 over the raw body in an `X-CallE-Signature`
+    # header, which is the common convention (Stripe/GitHub-style). Verify
+    # against docs.heycall-e.com and adjust the header name / algorithm if
+    # needed once confirmed.
+    #
+    # If CALLE_WEBHOOK_SECRET isn't configured, this logs a warning and lets
+    # the request through rather than break the demo — set it as soon as
+    # CALL-E issues one, at which point verification becomes mandatory.
+    def verify_calle_signature!
+      secret = ENV["CALLE_WEBHOOK_SECRET"]
+      if secret.blank?
+        Rails.logger.warn("[SECURITY] CALLE_WEBHOOK_SECRET not set — accepting call_e webhook without signature verification")
+        return
+      end
+
+      signature = request.headers["X-CallE-Signature"]
+      if signature.blank?
+        Rails.logger.warn("[SECURITY] Rejected call_e webhook: missing X-CallE-Signature header")
+        return head(:unauthorized)
+      end
+
+      body = request.raw_post
+      expected_signature = OpenSSL::HMAC.hexdigest("sha256", secret, body)
+
+      unless ActiveSupport::SecurityUtils.secure_compare(expected_signature, signature)
+        Rails.logger.warn("[SECURITY] Rejected call_e webhook: invalid signature")
+        return head(:unauthorized)
+      end
+    end
+
     def handle_technician_call(payload, call_id)
       call = Call.find(call_id)
       call.update!(
-        call_status: payload["status"],
+        call_status: normalized_call_status(payload["status"]),
         raw_payload: payload
       )
 
@@ -46,6 +94,17 @@ module Webhooks
       end
 
       broadcast_update(call.intervention)
+    end
+
+    # CALL-E's beta contract may send call_status values we haven't seen
+    # yet — an unrecognized enum value would otherwise raise and crash the
+    # webhook. Fall back to leaving the status untouched (nil on a fresh
+    # call, unchanged on an update) and log it for follow-up instead.
+    def normalized_call_status(status)
+      return status if Call.call_statuses.key?(status)
+
+      Rails.logger.warn("[webhooks/call_e] unrecognized call_status=#{status.inspect} — ignoring")
+      nil
     end
 
     def handle_no_answer(call)
@@ -122,7 +181,10 @@ module Webhooks
 
     def handle_daily_summary(payload)
       summary = DailySummaryCall.find(payload.dig("metadata", "daily_summary_call_id"))
-      summary.update!(call_status: payload["status"], raw_payload: payload)
+      summary.update!(
+        call_status: normalized_call_status(payload["status"]),
+        raw_payload: payload
+      )
     end
 
     def broadcast_update(intervention)

@@ -11,6 +11,7 @@
 class CallEClient
   include HTTParty
   base_uri ENV.fetch("CALLE_BASE_URL", "https://api.heycall-e.com")
+  default_timeout 10 # seconds — don't let a slow/hung external call block a Solid Queue worker
 
   class CallEError < StandardError; end
   class RateLimitError < CallEError; end

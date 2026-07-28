@@ -2,6 +2,8 @@
 # thereafter. No re-confirmation needed on each visit (unlike Technician),
 # since the PM operates the app directly.
 class PmProfileController < ApplicationController
+  include PmAuthenticatable
+
   before_action :redirect_if_exists, only: [:new, :create]
   before_action :redirect_if_missing, only: [:edit, :update]
 

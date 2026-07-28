@@ -1,4 +1,6 @@
 class TechniciansController < ApplicationController
+  include PmAuthenticatable
+
   def index
     @technicians = Technician.order(:name)
   end

@@ -1,4 +1,6 @@
 class DashboardController < ApplicationController
+  include PmAuthenticatable
+
   def show
     @status_counts = Intervention.group(:status).count
 

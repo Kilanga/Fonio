@@ -1,9 +1,13 @@
+require "openssl"
+require "base64"
+
 module Webhooks
   # Receives the technician's "DONE" SMS (Twilio inbound webhook), which
   # closes out an intervention and triggers the closing report call.
   # See SPEC.md sections 5, 8, 10 (duplicate detection).
   class SmsTechnicianController < ApplicationController
     skip_before_action :verify_authenticity_token
+    before_action :verify_twilio_signature!
 
     def create
       from = params[:From]
@@ -45,6 +49,34 @@ module Webhooks
       )
 
       head :ok
+    end
+
+    private
+
+    # Verifies the X-Twilio-Signature header per Twilio's documented
+    # algorithm (HMAC-SHA1 of the full request URL + sorted POST params,
+    # keyed with the account auth token), so this endpoint can't be spoofed
+    # by anyone who guesses/knows a technician's phone number.
+    # https://www.twilio.com/docs/usage/webhooks/webhooks-security
+    def verify_twilio_signature!
+      auth_token = ENV["TWILIO_AUTH_TOKEN"]
+      if auth_token.blank?
+        Rails.logger.error("[SECURITY] TWILIO_AUTH_TOKEN not set — rejecting inbound SMS webhook, cannot verify signature")
+        return head(:unauthorized)
+      end
+
+      signature = request.headers["X-Twilio-Signature"]
+      return head(:unauthorized) if signature.blank?
+
+      data = request.original_url.dup
+      request.request_parameters.sort.each { |key, value| data << key << value.to_s }
+
+      expected_signature = Base64.strict_encode64(OpenSSL::HMAC.digest("sha1", auth_token, data))
+
+      unless ActiveSupport::SecurityUtils.secure_compare(expected_signature, signature)
+        Rails.logger.warn("[SECURITY] Rejected inbound SMS webhook: invalid Twilio signature")
+        return head(:unauthorized)
+      end
     end
   end
 end

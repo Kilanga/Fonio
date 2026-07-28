@@ -1,6 +1,8 @@
 module TechnicianPortal
   class SessionsController < ApplicationController
     layout "technician"
+    before_action :throttle_login!, only: :create
+
     def new
     end
 
@@ -24,6 +26,14 @@ module TechnicianPortal
     end
 
     private
+
+    def throttle_login!
+      key = "throttle:technician_login:#{request.remote_ip}:#{params[:phone]}"
+      return unless rate_limited?(key, limit: 5, period: 1.minute)
+
+      flash.now[:alert] = "Too many attempts — please wait a minute and try again."
+      render :new, status: :too_many_requests
+    end
 
     def authenticated?(technician)
       if params[:code].present?

@@ -5,6 +5,7 @@
 class SmsClient
   include HTTParty
   base_uri "https://api.twilio.com/2010-04-01"
+  default_timeout 10 # seconds
 
   class SmsError < StandardError; end
 

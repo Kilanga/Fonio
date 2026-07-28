@@ -1,6 +1,8 @@
 require "csv"
 
 class InterventionsController < ApplicationController
+  include PmAuthenticatable
+
   def pending
     @interventions = Intervention.pending.includes(:technician).order(:scheduled_at)
   end
@@ -14,7 +16,9 @@ class InterventionsController < ApplicationController
     @interventions = Intervention.where.not(status: [:pending, :in_progress])
                                   .includes(:technician, calls: { photos_attachments: :blob })
 
-    @interventions = @interventions.where(status: params[:status]) if params[:status].present?
+    if params[:status].present? && Intervention.statuses.key?(params[:status])
+      @interventions = @interventions.where(status: params[:status])
+    end
     @interventions = @interventions.joins(:technician).where(technicians: { name: params[:technician] }) if params[:technician].present?
     @interventions = @interventions.where(site_name: params[:site]) if params[:site].present?
     if params[:q].present?

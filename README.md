@@ -23,14 +23,24 @@ rails db:create db:migrate db:seed
 Create a `.env` file (not committed) with:
 
 ```
+PM_AUTH_USER=pm
+PM_AUTH_PASSWORD=<pick something that isn't "changeme">
+
 CALLE_API_KEY=your_call_e_api_key
 CALLE_BASE_URL=https://api.heycall-e.com
 CALLE_WEBHOOK_URL=https://<your-public-url>/webhooks/call_e
+# CALLE_WEBHOOK_SECRET=  # set once CALL-E issues one (see webhooks/call_e_controller.rb)
 TWILIO_ACCOUNT_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_token
 TWILIO_FROM_NUMBER=+1...
 APP_HOST=<your-public-url, no scheme>
 ```
+
+`PM_AUTH_USER`/`PM_AUTH_PASSWORD` gate the entire PM interface (interventions,
+technicians, dashboard, audit log, profile) behind HTTP Basic Auth — the app
+logs a warning on boot if you leave the default password in place. The
+technician-facing account area (`/technician/...`) and the CALL-E/Twilio
+webhooks are unaffected (they have their own auth).
 
 CALL-E's webhook and Twilio's inbound SMS webhook both need a **public URL**
 reachable from the internet — for local development, expose your app with
@@ -64,7 +74,8 @@ Visit `http://localhost:3000`.
 ```bash
 heroku create
 heroku addons:create heroku-postgresql
-heroku config:set CALLE_API_KEY=... CALLE_BASE_URL=... CALLE_WEBHOOK_URL=... \
+heroku config:set PM_AUTH_USER=... PM_AUTH_PASSWORD=... \
+  CALLE_API_KEY=... CALLE_BASE_URL=... CALLE_WEBHOOK_URL=... CALLE_WEBHOOK_SECRET=... \
   TWILIO_ACCOUNT_SID=... TWILIO_AUTH_TOKEN=... TWILIO_FROM_NUMBER=... \
   APP_HOST=your-app.herokuapp.com
 git push heroku main

@@ -3,7 +3,16 @@ module TechnicianPortal
   # password login (see SPEC.md 3bis / earlier decision to support both).
   class LoginCodesController < ApplicationController
     layout "technician"
+
     def create
+      key = "throttle:login_code:#{request.remote_ip}:#{params[:phone]}"
+      if rate_limited?(key, limit: 3, period: 5.minutes)
+        # Same generic response even when throttled, so this endpoint can't
+        # be used to probe which phone numbers are registered or to spam
+        # SMS to an arbitrary number.
+        return redirect_to technician_login_path, notice: "If that number is registered, a code has been texted to it."
+      end
+
       technician = ::Technician.find_by(phone: params[:phone])
 
       if technician&.activated?
