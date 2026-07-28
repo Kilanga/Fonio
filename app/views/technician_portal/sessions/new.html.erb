@@ -1,0 +1,30 @@
+<h1 class="text-xl font-semibold mb-6 text-center">Fonio — Technician login</h1>
+
+<%= form_with url: technician_login_path, method: :post, class: "space-y-4" do %>
+  <div>
+    <label class="block text-sm font-medium mb-1">Phone number</label>
+    <input type="tel" name="phone" placeholder="+33..." required
+           class="w-full border border-slate-300 rounded-md px-3 py-2">
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Password</label>
+    <input type="password" name="password"
+           class="w-full border border-slate-300 rounded-md px-3 py-2">
+  </div>
+  <p class="text-xs text-slate-500 text-center">— or —</p>
+  <div>
+    <label class="block text-sm font-medium mb-1">Login code (if you requested one)</label>
+    <input type="text" name="code" inputmode="numeric" placeholder="6-digit code"
+           class="w-full border border-slate-300 rounded-md px-3 py-2">
+  </div>
+  <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-md text-sm font-medium">Log in</button>
+<% end %>
+
+<%= form_with url: technician_login_code_path, method: :post, html: { class: "mt-4" } do %>
+  <label class="block text-sm font-medium mb-1">No password handy? Get a login code</label>
+  <div class="flex gap-2">
+    <input type="tel" name="phone" placeholder="+33..." required
+           class="flex-1 border border-slate-300 rounded-md px-3 py-2">
+    <button type="submit" class="bg-slate-900 text-white px-4 py-2 rounded-md text-sm font-medium">Send code</button>
+  </div>
+<% end %>

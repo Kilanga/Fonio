@@ -105,11 +105,19 @@ module Webhooks
       ValidateReportAutomaticallyJob.set(wait: 2.hours).perform_later(call)
 
       # Send the technician their edit link right away
-      SmsClient.send_sms(
-        to: call.intervention.technician.phone,
-        body: "Here's your closing report to review or edit: " \
-              "#{Rails.application.routes.url_helpers.edit_report_url(token: call.edit_token, host: default_host)}"
-      )
+      begin
+        SmsClient.send_sms(
+          to: call.intervention.technician.phone,
+          body: "Here's your closing report to review or edit: " \
+                "#{Rails.application.routes.url_helpers.edit_report_url(token: call.edit_token, host: default_host)}"
+        )
+      rescue SmsClient::SmsError => e
+        Rails.logger.error("Failed to send report edit link for call=#{call.id}: #{e.message}")
+        AuditLog.create!(
+          intervention: call.intervention, actor: "system", event_type: "sms_error",
+          details: { context: "report_edit_link", error: e.message }
+        )
+      end
     end
 
     def handle_daily_summary(payload)

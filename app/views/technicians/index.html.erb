@@ -9,15 +9,14 @@
       <div>
         <p class="font-semibold"><%= technician.name %></p>
         <p class="text-sm text-slate-500"><%= masked_phone(technician.phone) %></p>
+        <% if technician.activated? %>
+          <p class="text-xs text-slate-400">Region/language: <%= technician.region || "not set yet" %> / <%= technician.locale || "not set yet" %></p>
+        <% end %>
       </div>
-      <% if technician.consent_given? %>
-        <span class="text-sm text-green-700">Consent confirmed <%= technician.consent_given_at.strftime("%b %-d, %Y") %></span>
+      <% if technician.activated? %>
+        <span class="text-sm text-green-700">Active — consent given <%= technician.consent_given_at.strftime("%b %-d, %Y") %></span>
       <% else %>
-        <div class="text-right">
-          <p class="text-sm text-amber-700 mb-2">Consent not yet confirmed — cannot be called</p>
-          <%= button_to "Confirm consent", consent_technician_path(technician), method: :post,
-                class: "text-sm bg-slate-900 text-white px-3 py-1.5 rounded-md" %>
-        </div>
+        <span class="text-sm text-amber-700">Awaiting activation (technician hasn't set up their account yet)</span>
       <% end %>
     </div>
   <% end %>

@@ -272,6 +272,57 @@ responses trigger a short technical retry rather than counting against the
 check-in retry budget) — both defensive, unconfirmed against a real
 payload yet.
 
+## 3bis. Technician accounts (redesign)
+
+**Change of design**: technicians now have their own account and log into a
+separate, mobile-first section of the app — they are no longer purely
+phone/SMS-only as originally scoped. This gives a stronger, self-asserted
+consent and lets the technician (not the PM) confirm their own phone number
+and preferred language.
+
+**Auth**: phone + password (`has_secure_password`). A one-time SMS code is
+also available as a login fallback / password reset path — no separate
+account recovery flow needed beyond that.
+
+**Account activation (replaces PM-driven consent)**: when the PM adds a
+technician (name + phone), the system sends an SMS with a secure activation
+link. The technician sets their own password there. Completing activation
+*is* their consent to receive AI-initiated calls/texts — a stronger, self
+-asserted signal than a PM checkbox on their behalf. `Technician#consent_given`
+is now set by this action, not by the PM.
+
+**Confirm-at-login**: every time a technician logs in, before seeing
+anything else, they're shown their phone number and current preferred
+region/language and asked to confirm or change them. This directly
+satisfies the community safety rule against inferring these details — the
+technician states them explicitly, every session.
+
+**Acceptance and start (new intervention sub-steps, same `pending` status)**:
+- PM schedules an intervention (`status: pending`, assigned to a technician)
+  as before, but no longer has a "Start" button — that action now belongs
+  to the technician.
+- Technician logs in, sees their assigned pending interventions, and can
+  **Accept** one (`accepted_at` timestamp set). This does not yet start the
+  clock.
+- When actually on site, the technician clicks **"I've started"**
+  (`Intervention#start!`, called from the technician's own session) — this
+  is what moves the intervention to `in_progress` and schedules the
+  check-in call 30 minutes out, exactly as before. The PM's Pending tab
+  becomes read-only/informational (shows whether the technician has
+  accepted yet), rather than an action button.
+
+**Data model additions**:
+```ruby
+class Technician
+  # password_digest:string  (has_secure_password)
+  # account_activated_at:datetime
+end
+
+class Intervention
+  # accepted_at:datetime
+end
+```
+
 ## 8. Triggers and integrations
 
 | Event | Trigger | Mechanism |

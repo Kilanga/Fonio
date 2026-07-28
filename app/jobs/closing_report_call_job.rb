@@ -5,6 +5,7 @@ class ClosingReportCallJob < ApplicationJob
   def perform(intervention)
     return unless intervention.closing_in_progress?
     return unless intervention.technician.consent_given?
+    return unless intervention.technician.region.present? && intervention.technician.locale.present?
 
     call = intervention.calls.create!(call_type: "closing_report", call_status: "initiated")
 

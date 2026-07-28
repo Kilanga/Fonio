@@ -10,23 +10,32 @@ class TechniciansController < ApplicationController
   def create
     @technician = Technician.new(technician_params)
     if @technician.save
-      redirect_to technicians_path, notice: "Technician added. Consent must still be confirmed before calling them."
+      @technician.start_activation!
+      begin
+        SmsClient.send_sms(
+          to: @technician.phone,
+          body: "Hi #{@technician.name}, set up your Fonio account here: " \
+                "#{Rails.application.routes.url_helpers.technician_activation_url(token: @technician.activation_token, host: default_host)}"
+        )
+        redirect_to technicians_path, notice: "Technician added. An activation link has been texted to them."
+      rescue SmsClient::SmsError => e
+        Rails.logger.error("Failed to send activation SMS to technician=#{@technician.id}: #{e.message}")
+        activation_url = Rails.application.routes.url_helpers.technician_activation_url(token: @technician.activation_token, host: default_host)
+        redirect_to technicians_path,
+          alert: "Technician added, but the activation text failed to send. Share this link with them directly: #{activation_url}"
+      end
     else
       render :new, status: :unprocessable_entity
     end
   end
 
-  # PM explicitly confirms the technician has been informed and consents to
-  # receiving AI-initiated phone calls and texts (SPEC.md section 9/11).
-  def consent
-    @technician = Technician.find(params[:id])
-    @technician.give_consent!
-    redirect_to technicians_path, notice: "Consent recorded for #{@technician.name}."
-  end
-
   private
 
   def technician_params
-    params.require(:technician).permit(:name, :phone, :region, :locale)
+    params.require(:technician).permit(:name, :phone)
+  end
+
+  def default_host
+    ENV.fetch("APP_HOST", "localhost:3000")
   end
 end

@@ -55,12 +55,6 @@ class InterventionsController < ApplicationController
     @audit_logs = @intervention.audit_logs.recent_first
   end
 
-  def start
-    @intervention = Intervention.find(params[:id])
-    @intervention.start!
-    redirect_to in_progress_interventions_path, notice: "Intervention started — check-in call scheduled in 30 minutes."
-  end
-
   def cancel
     @intervention = Intervention.find(params[:id])
     @intervention.cancel!

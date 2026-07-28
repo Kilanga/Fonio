@@ -22,5 +22,7 @@ class SmsClient
     raise SmsError, "Twilio send_sms failed: #{response.code} #{response.body}" unless response.success?
 
     response.parsed_response
+  rescue KeyError => e
+    raise SmsError, "Twilio not configured: #{e.message}"
   end
 end

@@ -35,18 +35,24 @@ class CallEClient
 
     raise_for_response(response, "create_call")
     response.parsed_response
+  rescue KeyError => e
+    raise CallEError, "CALL-E not configured: #{e.message}"
   end
 
   def self.get_call(call_id)
     response = get("/v1/calls/#{call_id}", headers: default_headers)
     raise_for_response(response, "get_call")
     response.parsed_response
+  rescue KeyError => e
+    raise CallEError, "CALL-E not configured: #{e.message}"
   end
 
   def self.get_call_events(call_id)
     response = get("/v1/calls/#{call_id}/events", headers: default_headers)
     raise_for_response(response, "get_call_events")
     response.parsed_response
+  rescue KeyError => e
+    raise CallEError, "CALL-E not configured: #{e.message}"
   end
 
   # CALL-E documents built-in rate limits and concurrency controls as part

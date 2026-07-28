@@ -1,0 +1,29 @@
+<div class="flex justify-between items-center mb-6">
+  <h1 class="text-xl font-semibold">Hi, <%= current_technician.name %></h1>
+  <%= button_to "Log out", technician_logout_path, method: :delete, class: "text-sm text-slate-400" %>
+</div>
+
+<h2 class="text-sm font-medium text-slate-500 mb-2">Your interventions</h2>
+
+<% if @pending.empty? && @in_progress.empty? %>
+  <p class="text-slate-500 text-sm">Nothing assigned to you right now.</p>
+<% end %>
+
+<% @in_progress.each do |intervention| %>
+  <%= link_to technician_intervention_path(intervention), class: "block bg-white border border-slate-200 rounded-lg p-4 mb-3" do %>
+    <p class="font-semibold"><%= intervention.site_name %></p>
+    <p class="text-sm text-blue-600 mt-1">In progress</p>
+  <% end %>
+<% end %>
+
+<% @pending.each do |intervention| %>
+  <%= link_to technician_intervention_path(intervention), class: "block bg-white border border-slate-200 rounded-lg p-4 mb-3" do %>
+    <p class="font-semibold"><%= intervention.site_name %></p>
+    <p class="text-sm text-slate-500"><%= intervention.scheduled_at.strftime("%b %-d, %H:%M") %></p>
+    <% if intervention.accepted_at? %>
+      <p class="text-sm text-green-700 mt-1">Accepted — tap to start when on site</p>
+    <% else %>
+      <p class="text-sm text-amber-700 mt-1">Awaiting your acceptance</p>
+    <% end %>
+  <% end %>
+<% end %>

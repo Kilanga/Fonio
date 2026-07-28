@@ -6,6 +6,7 @@ class CheckInCallJob < ApplicationJob
   def perform(intervention, attempt: 1)
     return unless intervention.in_progress?
     return unless intervention.technician.consent_given? # safety net, see SPEC.md section 9
+    return unless intervention.technician.region.present? && intervention.technician.locale.present?
 
     call = intervention.calls.create!(
       call_type: "check_in",

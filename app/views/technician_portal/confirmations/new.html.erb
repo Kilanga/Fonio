@@ -1,0 +1,43 @@
+<h1 class="text-xl font-semibold mb-2">Confirm your details</h1>
+<p class="text-sm text-slate-500 mb-6">
+  Please confirm your phone number and preferred call language — every time
+  you log in. We never guess this for you.
+</p>
+
+<%= form_with url: technician_confirm_path, method: :post, class: "space-y-4", data: { controller: "technician-region" } do |f| %>
+  <div>
+    <label class="block text-sm font-medium mb-1">Phone number</label>
+    <input type="tel" name="technician[phone]" value="<%= current_technician.phone %>" required
+           class="w-full border border-slate-300 rounded-md px-3 py-2">
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Region (call routing)</label>
+    <select name="technician[region]" required data-technician-region-target="region"
+            data-action="change->technician-region#updateLocales"
+            class="w-full border border-slate-300 rounded-md px-3 py-2">
+      <option value="">Select a region</option>
+      <% CallESupportedRegions.region_codes.each do |code| %>
+        <option value="<%= code %>" <%= "selected" if current_technician.region == code %>><%= code %></option>
+      <% end %>
+    </select>
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Preferred language</label>
+    <select name="technician[locale]" required data-technician-region-target="locale"
+            class="w-full border border-slate-300 rounded-md px-3 py-2">
+      <% if current_technician.locale %>
+        <option value="<%= current_technician.locale %>" selected><%= current_technician.locale %></option>
+      <% end %>
+    </select>
+  </div>
+
+  <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-md text-sm font-medium">Confirm and continue</button>
+<% end %>
+
+<script type="application/json" id="call-e-regions-data">
+  <%= raw CallESupportedRegions::REGIONS.transform_values { |v| v[:locales] }.to_json %>
+</script>
+
+<div class="mt-6 text-center">
+  <%= button_to "Log out", technician_logout_path, method: :delete, class: "text-sm text-slate-400" %>
+</div>
