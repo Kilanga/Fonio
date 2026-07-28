@@ -364,6 +364,29 @@ Recurring jobs (`OverdueReminderCheckJob`, `DailySummaryCallJob`) are scheduled 
 
 ## 13. Hackathon rules compliance
 
+**Submission target**: our project fits the "User-facing Apps" contribution
+area of `CALLE-AI/awesome-phone-call-agents` (`apps/` folder), matching
+their listed examples "customer callback app" / "business call workbench".
+
+**Repo-wide safety rules** (from `awesome-phone-call-agents`, applicable to
+any contribution including apps): reviewed in full and aligned —
+- Region/locale are explicit PM choices, never inferred from the phone
+  number's country code (an earlier auto-suggestion feature was removed
+  for this reason).
+- Phone numbers are masked in all user-facing views (technicians list,
+  intervention detail/cards); only the actual SMS/call-sending code paths
+  use the unmasked number.
+- Every intervention has a clear cancellation path (`cancel!`) before any
+  call is placed, satisfying their "every setup must include cancellation
+  instructions" guidance — enforced on our side via job status checks,
+  since CALL-E's Phase 1 beta API has no provider-side cancel-call endpoint.
+- Consent is required before any call/text (`Technician#consent_given?`),
+  consistent with their "do not create third-party recurring calls unless
+  the user explicitly states recipient consent" rule.
+- No hidden or duplicate recurring jobs — our two recurring tasks (overdue
+  reminder check, daily summary) are declared openly in
+  `config/recurring.yml`.
+
 - CALL-E is **actually called at runtime** (no mocked responses) — a pass/fail condition of
   Stage 1 judging
 - Project **built entirely during the Submission Period** (July 23 – September 14, 2026)
