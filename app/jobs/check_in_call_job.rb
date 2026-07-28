@@ -30,6 +30,10 @@ class CheckInCallJob < ApplicationJob
     )
 
     call.update!(call_e_call_id: response["call_id"], call_status: "in_progress")
+  rescue CallEClient::RateLimitError => e
+    Rails.logger.warn("CheckInCallJob rate-limited for intervention=#{intervention.id}, retrying in 2min: #{e.message}")
+    call.destroy # this attempt never actually reached CALL-E, don't leave a phantom Call record
+    self.class.set(wait: 2.minutes).perform_later(intervention, attempt: attempt)
   rescue CallEClient::CallEError => e
     Rails.logger.error("CheckInCallJob failed for intervention=#{intervention.id}: #{e.message}")
     AuditLog.create!(

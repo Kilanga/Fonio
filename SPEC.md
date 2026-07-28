@@ -253,6 +253,25 @@ body — the real fields are `task` (not `goal`), a structured `recipient`
 object (not a flat phone string), and a required `result_schema`. See
 `app/services/call_e_client.rb` and `app/services/call_scripts.rb`.
 
+**Marketing feature list vs. actual API scope**: CALL-E's own "Other
+Features" table (product vision, not API-specific) lists "Scheduled &
+Batch Calling" as a capability. The API-specific section of the same page
+explicitly states batch calls, scheduled calls, and cancel calls are "still
+outside the current beta scope." This doesn't affect us — our architecture
+never relies on CALL-E to schedule anything; all timing (30-min check-in
+wait, 5-min retry, 2h report auto-validation, daily summary) is handled by
+our own ActiveJob/Solid Queue jobs — but it's worth knowing the two
+descriptions of the product aren't the same thing when reading their docs.
+
+Also per their documented feature set: CALL-E's runtime handles voicemail,
+hold, transfers, and interruptions ("Real-World Voice Runtime"), and has
+its own rate limiting and concurrency controls ("Built-In Safety &
+Governance"). We've added a `voicemail` call_status (treated like
+`no_answer` for retry purposes) and a `CallEClient::RateLimitError` (429
+responses trigger a short technical retry rather than counting against the
+check-in retry budget) — both defensive, unconfirmed against a real
+payload yet.
+
 ## 8. Triggers and integrations
 
 | Event | Trigger | Mechanism |

@@ -13,6 +13,7 @@ class CallEClient
   base_uri ENV.fetch("CALLE_BASE_URL", "https://api.heycall-e.com")
 
   class CallEError < StandardError; end
+  class RateLimitError < CallEError; end
 
   # task: string — the natural-language goal for the call
   # recipient: { phone:, region:, locale: } — see CallESupportedRegions
@@ -32,24 +33,36 @@ class CallEClient
       }.to_json
     )
 
-    raise CallEError, "CALL-E create_call failed: #{response.code} #{response.body}" unless response.success?
-
+    raise_for_response(response, "create_call")
     response.parsed_response
   end
 
   def self.get_call(call_id)
     response = get("/v1/calls/#{call_id}", headers: default_headers)
-    raise CallEError, "CALL-E get_call failed: #{response.code} #{response.body}" unless response.success?
-
+    raise_for_response(response, "get_call")
     response.parsed_response
   end
 
   def self.get_call_events(call_id)
     response = get("/v1/calls/#{call_id}/events", headers: default_headers)
-    raise CallEError, "CALL-E get_call_events failed: #{response.code} #{response.body}" unless response.success?
-
+    raise_for_response(response, "get_call_events")
     response.parsed_response
   end
+
+  # CALL-E documents built-in rate limits and concurrency controls as part
+  # of its safety/governance features — surfaced here as a distinct error
+  # so callers (or a future retry-with-backoff wrapper) can special-case it
+  # rather than treating it like any other failure.
+  def self.raise_for_response(response, action)
+    return if response.success?
+
+    if response.code == 429
+      raise RateLimitError, "CALL-E #{action} rate-limited: #{response.body}"
+    end
+
+    raise CallEError, "CALL-E #{action} failed: #{response.code} #{response.body}"
+  end
+  private_class_method :raise_for_response
 
   def self.default_headers
     {

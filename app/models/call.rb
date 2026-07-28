@@ -12,7 +12,9 @@ class Call < ApplicationRecord
     initiated: "initiated",
     in_progress: "in_progress",
     answered: "answered",
-    no_answer: "no_answer"
+    no_answer: "no_answer",
+    voicemail: "voicemail" # CALL-E's "Real-World Voice Runtime" mentions voicemail
+                           # detection; not yet confirmed in a real webhook payload
   }, _prefix: :status
 
   enum report_status: {

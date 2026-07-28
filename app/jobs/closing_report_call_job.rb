@@ -25,6 +25,10 @@ class ClosingReportCallJob < ApplicationJob
     )
 
     call.update!(call_e_call_id: response["call_id"], call_status: "in_progress")
+  rescue CallEClient::RateLimitError => e
+    Rails.logger.warn("ClosingReportCallJob rate-limited for intervention=#{intervention.id}, retrying in 2min: #{e.message}")
+    call.destroy
+    self.class.set(wait: 2.minutes).perform_later(intervention)
   rescue CallEClient::CallEError => e
     Rails.logger.error("ClosingReportCallJob failed for intervention=#{intervention.id}: #{e.message}")
     AuditLog.create!(

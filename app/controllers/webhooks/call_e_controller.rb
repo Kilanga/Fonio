@@ -37,7 +37,7 @@ module Webhooks
         details: { call_type: call.call_type, call_status: call.call_status }
       )
 
-      if call.status_no_answer?
+      if call.status_no_answer? || call.status_voicemail?
         handle_no_answer(call)
       elsif call.type_check_in?
         apply_check_in_result(call, payload["structured_result"] || {})
