@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_28_103507) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_28_122226) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -90,6 +90,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_28_103507) do
     t.jsonb "raw_payload"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "period"
   end
 
   create_table "interventions", force: :cascade do |t|
@@ -108,6 +109,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_28_103507) do
     t.index ["site_name"], name: "index_interventions_on_site_name"
     t.index ["status"], name: "index_interventions_on_status"
     t.index ["technician_id"], name: "index_interventions_on_technician_id"
+  end
+
+  create_table "pms", force: :cascade do |t|
+    t.string "name"
+    t.string "phone"
+    t.string "region"
+    t.string "locale"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "solid_queue_blocked_executions", force: :cascade do |t|

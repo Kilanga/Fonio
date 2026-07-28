@@ -1,31 +1,44 @@
-# Recurring job (see config/recurring.yml) — calls the PM once a day (e.g. 6pm)
-# with a spoken briefing of the day's interventions.
+# Recurring job (see config/recurring.yml) — calls the PM twice a day:
+# once at noon covering the morning's interventions, once at 6pm covering
+# the afternoon's. Each call only reports on interventions from its own
+# half-day window.
 class DailySummaryCallJob < ApplicationJob
   queue_as :default
 
-  def perform(date = Date.current)
-    interventions = Intervention.where(started_at: date.all_day).to_a
+  WINDOWS = {
+    "morning"   => [0, 12],  # 00:00–12:00
+    "afternoon" => [12, 18]  # 12:00–18:00
+  }.freeze
+
+  def perform(period, date = Date.current)
+    start_hour, end_hour = WINDOWS.fetch(period)
+    window_start = date.beginning_of_day + start_hour.hours
+    window_end   = date.beginning_of_day + end_hour.hours
+
+    interventions = Intervention.where(started_at: window_start...window_end).to_a
     return if interventions.empty?
 
-    pm_phone = ENV.fetch("PM_PHONE_NUMBER")
-    pm_region = ENV.fetch("PM_REGION", "FR")
-    pm_locale = ENV.fetch("PM_LOCALE", "fr-FR")
+    pm = Pm.first
+    unless pm
+      Rails.logger.warn("DailySummaryCallJob(#{period}) skipped: no Pm profile set up yet")
+      return
+    end
 
-    summary_call = DailySummaryCall.create!(date: date, pm_phone: pm_phone, call_status: "initiated")
-    script = CallScripts.daily_summary(date, interventions)
+    summary_call = DailySummaryCall.create!(date: date, period: period, pm_phone: pm.phone, call_status: "initiated")
+    script = CallScripts.daily_summary(period, interventions)
 
     response = CallEClient.create_call(
       task: script[:task],
-      recipient: { phone: pm_phone, region: pm_region, locale: pm_locale },
+      recipient: pm.call_e_recipient,
       result_schema: script[:result_schema],
-      metadata: { daily_summary_call_id: summary_call.id, date: date.iso8601 },
-      idempotency_key: "daily_summary_#{date.iso8601}"
+      metadata: { daily_summary_call_id: summary_call.id, date: date.iso8601, period: period },
+      idempotency_key: "daily_summary_#{period}_#{date.iso8601}"
     )
 
     summary_call.update!(call_e_call_id: response["call_id"], call_status: "in_progress")
   rescue KeyError => e
-    Rails.logger.error("DailySummaryCallJob not configured (missing PM_PHONE_NUMBER?) for #{date}: #{e.message}")
+    Rails.logger.error("DailySummaryCallJob(#{period}) not configured for #{date}: #{e.message}")
   rescue CallEClient::CallEError => e
-    Rails.logger.error("DailySummaryCallJob failed for #{date}: #{e.message}")
+    Rails.logger.error("DailySummaryCallJob(#{period}) failed for #{date}: #{e.message}")
   end
 end

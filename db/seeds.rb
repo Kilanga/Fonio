@@ -14,6 +14,8 @@ unless technician.activated?
   technician.update!(region: "US", locale: "en-US")
 end
 
+Pm.first_or_create!(name: "Sam PM", phone: "+15550009999", region: "US", locale: "en-US")
+
 Intervention.find_or_create_by!(site_name: "Downtown Relay Cabinet") do |i|
   i.technician = technician
   i.site_address = "12 Main St"

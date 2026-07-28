@@ -4,7 +4,7 @@
   you log in. We never guess this for you.
 </p>
 
-<%= form_with url: technician_confirm_path, method: :post, class: "space-y-4", data: { controller: "technician-region" } do |f| %>
+<%= form_with url: technician_confirm_path, method: :post, class: "space-y-4", data: { controller: "region-locale" } do |f| %>
   <div>
     <label class="block text-sm font-medium mb-1">Phone number</label>
     <input type="tel" name="technician[phone]" value="<%= current_technician.phone %>" required
@@ -12,8 +12,8 @@
   </div>
   <div>
     <label class="block text-sm font-medium mb-1">Region (call routing)</label>
-    <select name="technician[region]" required data-technician-region-target="region"
-            data-action="change->technician-region#updateLocales"
+    <select name="technician[region]" required data-region-locale-target="region"
+            data-action="change->region-locale#updateLocales"
             class="w-full border border-slate-300 rounded-md px-3 py-2">
       <option value="">Select a region</option>
       <% CallESupportedRegions.region_codes.each do |code| %>
@@ -23,7 +23,7 @@
   </div>
   <div>
     <label class="block text-sm font-medium mb-1">Preferred language</label>
-    <select name="technician[locale]" required data-technician-region-target="locale"
+    <select name="technician[locale]" required data-region-locale-target="locale"
             class="w-full border border-slate-300 rounded-md px-3 py-2">
       <% if current_technician.locale %>
         <option value="<%= current_technician.locale %>" selected><%= current_technician.locale %></option>

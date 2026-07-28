@@ -29,9 +29,6 @@ CALLE_WEBHOOK_URL=https://<your-public-url>/webhooks/call_e
 TWILIO_ACCOUNT_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_token
 TWILIO_FROM_NUMBER=+1...
-PM_PHONE_NUMBER=+1...
-PM_REGION=FR
-PM_LOCALE=fr-FR
 APP_HOST=<your-public-url, no scheme>
 ```
 
@@ -69,11 +66,16 @@ heroku create
 heroku addons:create heroku-postgresql
 heroku config:set CALLE_API_KEY=... CALLE_BASE_URL=... CALLE_WEBHOOK_URL=... \
   TWILIO_ACCOUNT_SID=... TWILIO_AUTH_TOKEN=... TWILIO_FROM_NUMBER=... \
-  PM_PHONE_NUMBER=... APP_HOST=your-app.herokuapp.com
+  APP_HOST=your-app.herokuapp.com
 git push heroku main
 heroku run rails db:migrate
 heroku ps:scale web=1 worker=1
 ```
+
+After deploying, visit `/pm_profile/new` once to set up your PM profile
+(name, phone, region, language) — this is what the twice-daily summary
+calls (noon and 6pm) use, and it replaces the old `PM_PHONE_NUMBER`/
+`PM_REGION`/`PM_LOCALE` env vars.
 
 The `worker` dyno (running `bin/jobs`, see `Procfile`) is required — without
 it, check-in calls, retries, reminders, the daily summary call, and report

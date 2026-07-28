@@ -86,17 +86,20 @@ module CallScripts
     }
   end
 
-  def self.daily_summary(date, interventions)
+  # period: "morning" (interventions from 00:00-12:00) or "afternoon"
+  # (12:00-18:00) — see DailySummaryCallJob for the exact window computation.
+  def self.daily_summary(period, interventions)
     completed = interventions.select { |i| i.status == "completed" }
     flagged   = interventions.select { |i| %w[action_required no_show call_failed].include?(i.status) }
 
     flagged_lines = flagged.map { |i| "- #{i.site_name} (#{i.technician.name}): #{i.status.humanize}" }.join("\n")
+    window_label = period == "morning" ? "this morning" : "this afternoon"
 
     task = <<~TASK
-      Call the project manager with an evening summary for #{date.strftime('%B %-d')}.
+      Call the project manager with a summary of field interventions #{window_label}.
 
       Report:
-      - #{completed.count} intervention(s) completed without issue.
+      - #{completed.count} intervention(s) completed without issue #{window_label}.
       - #{flagged.count} intervention(s) need attention:
       #{flagged_lines.presence || '  (none)'}
 

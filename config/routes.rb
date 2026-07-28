@@ -17,6 +17,7 @@ Rails.application.routes.draw do
   end
 
   resources :technicians, only: [:index, :new, :create]
+  resource :pm_profile, only: [:new, :create, :edit, :update], controller: "pm_profile"
 
   get "dashboard", to: "dashboard#show"
   get "audit_logs", to: "audit_logs#index"

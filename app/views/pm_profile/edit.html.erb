@@ -1,0 +1,38 @@
+<h1 class="text-xl font-semibold mb-6">Edit your profile</h1>
+<p class="text-sm text-slate-500 mb-6">
+  Used for the daily summary calls CALL-E places to you (see Dashboard).
+</p>
+
+<%= form_with model: @pm, url: pm_profile_path, method: :patch, class: "max-w-lg space-y-4", data: { controller: "region-locale" } do |f| %>
+  <div>
+    <label class="block text-sm font-medium mb-1">Name</label>
+    <%= f.text_field :name, class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Phone (with country code)</label>
+    <%= f.text_field :phone, placeholder: "+33...", class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Region (call routing)</label>
+    <select name="pm[region]" data-region-locale-target="region" data-action="change->region-locale#updateLocales"
+          class="w-full border border-slate-300 rounded-md px-3 py-2">
+    <option value="">Select a region</option>
+    <% CallESupportedRegions.region_codes.each do |code| %>
+      <option value="<%= code %>" <%= "selected" if @pm.region == code %>><%= code %></option>
+    <% end %>
+  </select>
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Preferred language</label>
+    <select name="pm[locale]" data-region-locale-target="locale"
+          class="w-full border border-slate-300 rounded-md px-3 py-2">
+    <% if @pm.locale %><option value="<%= @pm.locale %>" selected><%= @pm.locale %></option><% end %>
+  </select>
+  </div>
+
+  <%= f.submit "Save changes", class: "bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700" %>
+<% end %>
+
+<script type="application/json" id="call-e-regions-data">
+  <%= raw CallESupportedRegions::REGIONS.transform_values { |v| v[:locales] }.to_json %>
+</script>

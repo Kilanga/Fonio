@@ -16,14 +16,24 @@ production:
   overdue_reminder_check:
     class: OverdueReminderCheckJob
     schedule: every 30 minutes
-  daily_summary_call:
+  midday_summary_call:
     class: DailySummaryCallJob
+    args: ["morning"]
+    schedule: every day at 12pm
+  evening_summary_call:
+    class: DailySummaryCallJob
+    args: ["afternoon"]
     schedule: every day at 6pm
 
 development:
   overdue_reminder_check:
     class: OverdueReminderCheckJob
     schedule: every 30 minutes
-  daily_summary_call:
+  midday_summary_call:
     class: DailySummaryCallJob
+    args: ["morning"]
+    schedule: every day at 12pm
+  evening_summary_call:
+    class: DailySummaryCallJob
+    args: ["afternoon"]
     schedule: every day at 6pm
