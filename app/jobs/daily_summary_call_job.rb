@@ -23,6 +23,8 @@ class DailySummaryCallJob < ApplicationJob
     )
 
     summary_call.update!(call_e_call_id: response["call_id"], call_status: "in_progress")
+  rescue KeyError => e
+    Rails.logger.error("DailySummaryCallJob not configured (missing PM_PHONE_NUMBER?) for #{date}: #{e.message}")
   rescue CallEClient::CallEError => e
     Rails.logger.error("DailySummaryCallJob failed for #{date}: #{e.message}")
   end
