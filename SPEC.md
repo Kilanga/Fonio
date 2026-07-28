@@ -173,15 +173,27 @@ structured-result schema.
 6. Close: "You'll get a text to review/edit your report and add photos if needed."
 ```
 
-### Daily summary call (to the PM, every evening)
+### Half-day summary calls (to the PM, noon and 6pm)
 ```
 1. Greeting
-2. State how many interventions were: completed without issue, flagged action_required,
-   no_show, or call_failed today
-3. For each action_required / no_show / call_failed item: site name, technician name,
-   one-line reason
+2. State how many interventions were completed without issue in that half-day
+   window (00:00-12:00 for the noon call, 12:00-18:00 for the 6pm call), and
+   how many need attention (action_required / no_show / call_failed)
+3. For each item needing attention: site name, technician name, one-line reason
 4. Close: "Full details are in your dashboard."
 ```
+Two separate calls per day rather than one evening summary — each only
+reports on its own half-day window (`DailySummaryCallJob`, parameterized
+by `period: "morning" | "afternoon"`, see `config/recurring.yml`).
+
+## 3ter. PM profile
+
+A single persisted `Pm` record (name, phone, region, locale), set up once
+via `/pm_profile` — this is what the half-day summary calls dial. Unlike
+`Technician`, the PM does not reconfirm these details on every visit; they
+operate the app directly rather than being someone CALL-E infers details
+about. Shares the same `CallERecipient` concern (region/locale validation)
+as `Technician`.
 
 ## 6bis. Language handling (corrected against the real API contract)
 
@@ -337,7 +349,7 @@ end
 | Closing report call | Automatic, on "DONE" SMS receipt | `ClosingReportCallJob` |
 | Closing report result | CALL-E → our server | Webhook `POST /webhooks/call_e` (same endpoint, distinguished by `call_type`) |
 | Report auto-validation | 2h after draft creation, if untouched | `ValidateReportAutomaticallyJob` |
-| Daily summary call | Recurring, once daily (e.g. 6pm) | `DailySummaryCallJob` |
+| Daily summary calls | Recurring, noon and 6pm | `DailySummaryCallJob(period)` |
 | Live UI update | On every relevant webhook | `Turbo::StreamsChannel.broadcast_replace_to` |
 | Audit logging | On every event above | `AuditLog.create!` alongside each state change |
 
