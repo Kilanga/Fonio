@@ -4,7 +4,19 @@ class CheckInCallJob < ApplicationJob
   queue_as :default
 
   def perform(intervention, attempt: 1)
-    return unless intervention.in_progress?
+    # Covers the "technician finished in under 30 minutes" case: they'll
+    # have already texted DONE (moving the intervention past in_progress)
+    # by the time this fires, so we skip the now-pointless check-in call
+    # instead of placing one after the fact. Logged so it's visible in the
+    # audit trail rather than silently vanishing.
+    unless intervention.in_progress?
+      AuditLog.create!(
+        intervention: intervention, technician: intervention.technician,
+        actor: "system", event_type: "check_in_skipped",
+        details: { reason: "intervention no longer in_progress (status=#{intervention.status})", attempt: attempt }
+      )
+      return
+    end
     return unless intervention.technician.consent_given? # safety net, see SPEC.md section 9
     return unless intervention.technician.region.present? && intervention.technician.locale.present?
 

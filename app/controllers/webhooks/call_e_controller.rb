@@ -132,7 +132,9 @@ module Webhooks
         has_started: result["has_started"],
         has_issue: result["has_issue"],
         severity: result["severity"],
+        issue_type: result["issue_type"],
         needs_help: result["needs_help"],
+        help_needed_description: result["help_needed_description"],
         revised_eta: result["revised_eta"]
       )
 
@@ -149,6 +151,34 @@ module Webhooks
       AuditLog.create!(
         intervention: intervention, technician: intervention.technician,
         actor: "system", event_type: "status_changed", details: { new_status: new_status }
+      )
+
+      # There's no review/edit step on check-in results the way there is
+      # for closing reports (SPEC.md section 7) — a misheard "blocking"
+      # vs "minor" would otherwise go straight to the PM unchecked. A
+      # confirmation text is a much lighter safety net than a full web
+      # form, and only fires when something was actually flagged so a
+      # routine "all good" check-in doesn't get an SMS.
+      send_check_in_confirmation(call, intervention) if call.has_issue? || call.needs_help?
+    end
+
+    def send_check_in_confirmation(call, intervention)
+      summary = [
+        call.issue_type.present? ? "issue: #{call.issue_type.humanize.downcase}" : nil,
+        call.severity.present? ? "severity: #{call.severity}" : nil,
+        call.needs_help? ? "help requested" : nil
+      ].compact.join(", ")
+
+      SmsClient.send_sms(
+        to: intervention.technician.phone,
+        body: "Fonio noted from your check-in call: #{summary}. " \
+              "If that's wrong, please call your PM directly to correct it."
+      )
+    rescue SmsClient::SmsError => e
+      Rails.logger.error("Failed to send check-in confirmation for call=#{call.id}: #{e.message}")
+      AuditLog.create!(
+        intervention: intervention, actor: "system", event_type: "sms_error",
+        details: { context: "check_in_confirmation", error: e.message }
       )
     end
 

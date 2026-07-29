@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_28_122226) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_30_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -66,6 +66,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_28_122226) do
     t.string "severity"
     t.boolean "needs_help"
     t.datetime "revised_eta"
+    t.string "issue_type"
+    t.text "help_needed_description"
     t.string "report_status"
     t.string "edit_token"
     t.datetime "edit_token_expires_at"
