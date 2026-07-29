@@ -16,7 +16,11 @@ class DailySummaryCallJob < ApplicationJob
     window_end   = date.beginning_of_day + end_hour.hours
 
     interventions = Intervention.where(started_at: window_start...window_end).to_a
-    return if interventions.empty?
+    # Not just "did anything start in this window" — an intervention that's
+    # still in_progress (or was cancelled) has nothing to tell the PM yet.
+    # Only call if there's something actually reportable.
+    reportable = interventions.select { |i| i.status.in?(%w[completed action_required no_show call_failed]) }
+    return if reportable.empty?
 
     pm = Pm.first
     unless pm
