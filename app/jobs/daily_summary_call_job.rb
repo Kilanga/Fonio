@@ -5,13 +5,8 @@
 class DailySummaryCallJob < ApplicationJob
   queue_as :default
 
-  WINDOWS = {
-    "morning"   => [0, 12],  # 00:00–12:00
-    "afternoon" => [12, 18]  # 12:00–18:00
-  }.freeze
-
   def perform(period, date = Date.current)
-    start_hour, end_hour = WINDOWS.fetch(period)
+    start_hour, end_hour = DailySummaryCall::WINDOWS.fetch(period)
     window_start = date.beginning_of_day + start_hour.hours
     window_end   = date.beginning_of_day + end_hour.hours
 
@@ -19,7 +14,7 @@ class DailySummaryCallJob < ApplicationJob
     # Not just "did anything start in this window" — an intervention that's
     # still in_progress (or was cancelled) has nothing to tell the PM yet.
     # Only call if there's something actually reportable.
-    reportable = interventions.select { |i| i.status.in?(%w[completed action_required no_show call_failed]) }
+    reportable = interventions.select { |i| i.status.in?(DailySummaryCall::FLAGGED_STATUSES + ["completed"]) }
     return if reportable.empty?
 
     pm = Pm.first

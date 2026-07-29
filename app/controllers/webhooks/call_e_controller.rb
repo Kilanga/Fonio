@@ -217,6 +217,93 @@ module Webhooks
         call_status: normalized_call_status(payload["status"]),
         raw_payload: payload
       )
+
+      apply_daily_summary_decisions(summary, payload["structured_result"] || {})
+    end
+
+    # Turns the PM's spoken decisions during the recap call into real
+    # actions — otherwise this call is just a read-out the PM could get
+    # from a push notification. Deliberately conservative: only acts when
+    # a decision's site_name resolves to exactly one flagged intervention
+    # from that call's window. Anything ambiguous, unmatched, or using an
+    # action we don't recognize is logged rather than guessed at, since
+    # this is applying an AI's interpretation of a live phone conversation
+    # — see the note on CALL-E's contract at the top of this file.
+    def apply_daily_summary_decisions(summary, result)
+      decisions = result["decisions"]
+      return unless decisions.is_a?(Array) && decisions.any?
+
+      flagged = summary.flagged_interventions.to_a
+      applied = decisions.filter_map { |decision| apply_daily_summary_decision(summary, flagged, decision) }
+
+      send_daily_summary_confirmation(summary, applied) if applied.any?
+    end
+
+    def apply_daily_summary_decision(summary, flagged, decision)
+      site_name = decision["site_name"].to_s
+      action = decision["action"]
+      return if site_name.blank?
+
+      matches = flagged.select { |i| i.site_name.to_s.casecmp?(site_name) }
+      matches = flagged.select { |i| i.site_name.to_s.downcase.include?(site_name.downcase) } if matches.empty?
+
+      if matches.size != 1
+        AuditLog.create!(
+          actor: "call_e", event_type: "daily_summary_decision_unmatched",
+          details: { site_name: site_name, action: action, candidates: matches.size, daily_summary_call_id: summary.id }
+        )
+        return nil
+      end
+
+      intervention = matches.first
+
+      case action
+      when "mark_resolved"
+        intervention.update!(status: "completed", completed_at: Time.current)
+        AuditLog.create!(
+          intervention: intervention, technician: intervention.technician,
+          actor: "pm", event_type: "manually_resolved",
+          details: { via: "daily_summary_call", daily_summary_call_id: summary.id }
+        )
+        broadcast_update(intervention)
+        { intervention: intervention, action: action }
+      when "text_technician"
+        instruction = decision["instruction"].to_s
+        return nil if instruction.blank?
+
+        SmsClient.send_sms(to: intervention.technician.phone, body: "Message from your PM: #{instruction}")
+        AuditLog.create!(
+          intervention: intervention, technician: intervention.technician,
+          actor: "pm", event_type: "instruction_sent_to_technician",
+          details: { instruction: instruction, via: "daily_summary_call", daily_summary_call_id: summary.id }
+        )
+        { intervention: intervention, action: action, instruction: instruction }
+      else
+        nil # "no_action", or an action we don't recognize — nothing to do
+      end
+    rescue SmsClient::SmsError => e
+      Rails.logger.error("Failed to send PM instruction from daily summary call=#{summary.id}: #{e.message}")
+      AuditLog.create!(
+        intervention: intervention, actor: "system", event_type: "sms_error",
+        details: { context: "daily_summary_instruction", error: e.message }
+      )
+      nil
+    end
+
+    def send_daily_summary_confirmation(summary, applied)
+      lines = applied.map do |a|
+        case a[:action]
+        when "mark_resolved" then "Marked \"#{a[:intervention].site_name}\" resolved."
+        when "text_technician" then "Texted #{a[:intervention].technician.name}: \"#{a[:instruction]}\""
+        end
+      end.compact
+
+      SmsClient.send_sms(
+        to: summary.pm_phone,
+        body: "From your Fonio call just now — #{lines.join(' ')} Reply or check the dashboard if anything's wrong."
+      )
+    rescue SmsClient::SmsError => e
+      Rails.logger.error("Failed to send daily summary confirmation for summary=#{summary.id}: #{e.message}")
     end
 
     def broadcast_update(intervention)

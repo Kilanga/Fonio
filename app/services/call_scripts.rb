@@ -103,8 +103,22 @@ module CallScripts
       - #{flagged.count} intervention(s) need attention:
       #{flagged_lines.presence || '  (none)'}
 
-      For each flagged item, state the site, technician, and reason in one
-      sentence. Close by telling them full details are in their dashboard.
+      #{flagged.any? ? <<~FOLLOWUP.strip : "Close by telling them full details are in their dashboard."}
+        For each flagged item, state the site, technician, and reason in one
+        sentence, then ask whether they want to do anything about it right
+        now:
+        - Mark it resolved, if they say it's already been handled.
+        - Send the technician a short text message on their behalf — if
+          so, ask exactly what they want said, and keep it brief.
+        - Or nothing for now — they'll handle it later from the dashboard.
+
+        Record one entry in `decisions` for each flagged site the PM
+        actually responds about, using the exact site name as stated
+        above. If they don't mention a flagged site at all, leave it out
+        of `decisions` entirely — never guess "no action" for something
+        they didn't address. Close by telling them full details are in
+        their dashboard either way.
+      FOLLOWUP
     TASK
 
     { task: task, result_schema: daily_summary_result_schema }
@@ -115,7 +129,20 @@ module CallScripts
       type: "object",
       required: ["acknowledged"],
       properties: {
-        acknowledged: { type: "boolean" }
+        acknowledged: { type: "boolean" },
+        decisions: {
+          type: "array",
+          items: {
+            type: "object",
+            required: ["site_name", "action"],
+            properties: {
+              site_name: { type: "string" },
+              action: { type: "string", enum: ["mark_resolved", "text_technician", "no_action"] },
+              instruction: { type: "string" }
+            },
+            additionalProperties: false
+          }
+        }
       },
       additionalProperties: false
     }

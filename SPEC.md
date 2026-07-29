@@ -22,8 +22,11 @@ A PM-facing web app that uses CALL-E to:
    by the technician to a dedicated number — removing the chore of manually typing up a
    report. The technician can still review/edit the transcribed report afterward via a secure
    link (Kizeo-style), including attaching photos.
-3. **Call the PM every evening with a spoken daily summary** of all interventions handled
-   that day — a status briefing without the PM having to open the dashboard.
+3. **Call the PM twice a day (noon and evening) with a spoken, interactive summary** of
+   interventions handled in that half-day window — not just a read-out: for each flagged
+   item the PM can decide right on the call to mark it resolved or have a short instruction
+   texted to the technician, and gets an SMS confirming whatever was applied. Only placed if
+   there's actually something to report in that window.
 
 The PM tracks everything from a web interface with live updates, search/filtering, a
 synthesis dashboard, CSV export, and a full audit log of every call and status change.
