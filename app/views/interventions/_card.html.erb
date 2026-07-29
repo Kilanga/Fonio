@@ -15,9 +15,15 @@
       <% if intervention.reminder_sent_at %>
         <p class="text-slate-400">Reminder sent <%= time_ago_in_words(intervention.reminder_sent_at) %> ago</p>
       <% end %>
-      <% latest_check_in = intervention.calls.find { |c| c.call_type == "check_in" } %>
+      <% latest_check_in = intervention.calls.select { |c| c.call_type == "check_in" }.max_by(&:attempt) %>
       <% if latest_check_in&.has_issue? %>
-        <p class="text-amber-700">Issue: <%= latest_check_in.severity %> — needs help: <%= latest_check_in.needs_help ? "yes" : "no" %></p>
+        <p class="text-amber-700">
+          Issue: <%= latest_check_in.issue_type&.humanize || "unspecified" %>
+          (<%= latest_check_in.severity %>) — needs help: <%= latest_check_in.needs_help ? "yes" : "no" %>
+        </p>
+        <% if latest_check_in.help_needed_description.present? %>
+          <p class="text-amber-700">"<%= latest_check_in.help_needed_description %>"</p>
+        <% end %>
       <% end %>
     </div>
 

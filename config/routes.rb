@@ -14,6 +14,11 @@ Rails.application.routes.draw do
       get :tracking
       get :export, defaults: { format: "csv" }
     end
+    resources :calls, only: [], controller: "calls" do
+      member do
+        get :transcript
+      end
+    end
   end
 
   resources :technicians, only: [:index, :new, :create]

@@ -1,0 +1,45 @@
+<div class="flex justify-between items-start mb-6">
+  <div>
+    <h1 class="text-xl font-semibold">Call transcript</h1>
+    <p class="text-slate-500 text-sm">
+      <%= @call.call_type.humanize %> call for <%= @intervention.site_name %>
+      (<%= @intervention.technician.name %>)
+    </p>
+  </div>
+  <%= link_to "← Back to intervention", intervention_path(@intervention), class: "text-sm text-blue-600 hover:underline" %>
+</div>
+
+<% if @error %>
+  <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm">
+    <%= @error %>
+  </div>
+<% else %>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <%
+      # CALL-E's exact event/transcript shape isn't confirmed yet (Phase 1
+      # beta — see CallEClient) — render defensively rather than assume a
+      # fixed structure, so this page doesn't break the moment we see a
+      # real payload for the first time.
+      events = @events.is_a?(Array) ? @events : @events["events"] || @events["data"] || [@events]
+    %>
+    <% if events.blank? %>
+      <p class="text-sm text-slate-500">No events returned for this call yet.</p>
+    <% else %>
+      <ul class="text-sm space-y-3">
+        <% events.each do |event| %>
+          <li class="border-b border-slate-100 pb-2 last:border-0">
+            <% if event.is_a?(Hash) %>
+              <% speaker = event["speaker"] || event["role"] || event["type"] %>
+              <% text = event["text"] || event["message"] || event["content"] %>
+              <% timestamp = event["timestamp"] || event["created_at"] %>
+              <p class="text-slate-400 text-xs"><%= timestamp %></p>
+              <p><strong><%= speaker&.humanize || "Event" %>:</strong> <%= text || event.except("timestamp", "created_at").to_json %></p>
+            <% else %>
+              <p><%= event %></p>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </div>
+<% end %>

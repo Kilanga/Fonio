@@ -15,6 +15,63 @@
   </ul>
 </div>
 
+<% latest_check_in = @intervention.calls.select { |c| c.call_type == "check_in" }.max_by(&:attempt) %>
+<% if latest_check_in&.call_status.present? %>
+  <div class="bg-white border border-slate-200 rounded-lg p-4 mb-6">
+    <div class="flex justify-between items-center mb-2">
+      <p class="font-medium">Check-in call</p>
+      <%= link_to "View transcript", intervention_call_transcript_path(@intervention, latest_check_in),
+            class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+    <ul class="text-sm space-y-1 text-slate-600">
+      <li>Status: <%= latest_check_in.call_status&.humanize || "—" %> (attempt <%= latest_check_in.attempt %>)</li>
+      <% if latest_check_in.has_started == false %>
+        <li class="text-amber-700">Technician had not started at check-in time.</li>
+      <% end %>
+      <% if latest_check_in.has_issue? %>
+        <li class="text-amber-700">
+          Issue: <%= latest_check_in.issue_type&.humanize || "unspecified" %>
+          (severity: <%= latest_check_in.severity || "unspecified" %>) —
+          needs help: <%= latest_check_in.needs_help ? "yes" : "no" %>
+        </li>
+        <% if latest_check_in.help_needed_description.present? %>
+          <li>Help requested: "<%= latest_check_in.help_needed_description %>"</li>
+        <% end %>
+      <% end %>
+      <% if latest_check_in.revised_eta.present? %>
+        <li>Revised ETA: <%= latest_check_in.revised_eta.strftime("%b %-d, %H:%M") %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
+<% report = @intervention.calls.find { |c| c.call_type == "closing_report" } %>
+<% if report %>
+  <div class="bg-white border border-slate-200 rounded-lg p-4 mb-6">
+    <div class="flex justify-between items-center mb-2">
+      <p class="font-medium">Closing report (<%= report.report_status %>)</p>
+      <%= link_to "View transcript", intervention_call_transcript_path(@intervention, report),
+            class: "text-sm text-blue-600 hover:underline" %>
+    </div>
+    <div class="text-sm space-y-1 text-slate-700">
+      <p><strong>Work completed:</strong> <%= report.work_completed %></p>
+      <p><strong>Equipment used:</strong> <%= report.equipment_used %></p>
+      <% if report.anomalies.present? %>
+        <p><strong>Anomalies:</strong> <%= report.anomalies %> (severe: <%= report.is_anomaly_severe? ? "yes" : "no" %>)</p>
+        <p><strong>Recommendations:</strong> <%= report.recommendations %></p>
+      <% end %>
+      <p><strong>Actual duration:</strong> <%= report.actual_duration_minutes ? "#{report.actual_duration_minutes} min" : "—" %></p>
+      <% if report.photos.attached? %>
+        <div class="flex gap-2 mt-2">
+          <% report.photos.each do |photo| %>
+            <%= image_tag photo, class: "w-20 h-20 object-cover rounded-md border" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
 <div class="bg-white border border-slate-200 rounded-lg p-4 mb-6">
   <p class="font-medium mb-2">Audit log</p>
   <ul class="text-sm space-y-1 text-slate-600">
