@@ -59,6 +59,8 @@ module Webhooks
     # by anyone who guesses/knows a technician's phone number.
     # https://www.twilio.com/docs/usage/webhooks/webhooks-security
     def verify_twilio_signature!
+      return if skip_webhook_signature_check?
+
       auth_token = ENV["TWILIO_AUTH_TOKEN"]
       if auth_token.blank?
         Rails.logger.error("[SECURITY] TWILIO_AUTH_TOKEN not set — rejecting inbound SMS webhook, cannot verify signature")

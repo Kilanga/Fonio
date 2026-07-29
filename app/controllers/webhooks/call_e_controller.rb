@@ -51,6 +51,8 @@ module Webhooks
     # the request through rather than break the demo — set it as soon as
     # CALL-E issues one, at which point verification becomes mandatory.
     def verify_calle_signature!
+      return if skip_webhook_signature_check?
+
       secret = ENV["CALLE_WEBHOOK_SECRET"]
       if secret.blank?
         Rails.logger.warn("[SECURITY] CALLE_WEBHOOK_SECRET not set — accepting call_e webhook without signature verification")
