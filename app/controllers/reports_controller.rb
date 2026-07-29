@@ -4,6 +4,7 @@
 class ReportsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:update] # no CSRF session on a public SMS link
   before_action :find_call_by_token
+  around_action :use_technician_locale
 
   def edit
     render :edit
@@ -11,7 +12,7 @@ class ReportsController < ApplicationController
 
   def update
     if @call.report_validated?
-      redirect_to edit_report_path(token: @call.edit_token), alert: "This report has already been validated."
+      redirect_to edit_report_path(token: @call.edit_token), alert: t("technician.report.already_validated")
       return
     end
 
@@ -38,6 +39,17 @@ class ReportsController < ApplicationController
   end
 
   private
+
+  # No session here (this is a stateless tokenized link, see the class
+  # comment) — the technician is known directly via the call, so their
+  # locale can be applied without needing TechnicianLocalizable's
+  # session-based lookup.
+  def use_technician_locale(&block)
+    raw = @call&.intervention&.technician&.locale
+    lang = raw.to_s.split("-").first&.downcase&.to_sym
+    locale = lang && I18n.available_locales.include?(lang) ? lang : I18n.default_locale
+    I18n.with_locale(locale, &block)
+  end
 
   def find_call_by_token
     @call = Call.find_by!(edit_token: params[:token])

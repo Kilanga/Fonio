@@ -1,20 +1,18 @@
-<h1 class="text-xl font-semibold mb-2 text-center">Set up your account</h1>
+<h1 class="text-xl font-semibold mb-2 text-center"><%= t("technician.activation.title") %></h1>
 <p class="text-sm text-slate-500 mb-6 text-center">
-  Hi <%= @technician.name %> — choose a password to activate your Fonio
-  account. This also confirms your consent to receive AI-initiated calls
-  and texts from us.
+  <%= t("technician.activation.greeting", name: @technician.name) %>
 </p>
 
 <%= form_with url: technician_activation_path(token: params[:token]), method: :post, class: "space-y-4" do %>
   <div>
-    <label class="block text-sm font-medium mb-1">Password</label>
+    <label class="block text-sm font-medium mb-1"><%= t("technician.activation.password") %></label>
     <input type="password" name="password" required minlength="8"
            class="w-full border border-slate-300 rounded-md px-3 py-2">
   </div>
   <div>
-    <label class="block text-sm font-medium mb-1">Confirm password</label>
+    <label class="block text-sm font-medium mb-1"><%= t("technician.activation.confirm_password") %></label>
     <input type="password" name="password_confirmation" required minlength="8"
            class="w-full border border-slate-300 rounded-md px-3 py-2">
   </div>
-  <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-md text-sm font-medium">Activate my account</button>
+  <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-md text-sm font-medium"><%= t("technician.activation.submit") %></button>
 <% end %>

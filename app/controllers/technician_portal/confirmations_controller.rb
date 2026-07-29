@@ -10,11 +10,12 @@ module TechnicianPortal
     def create
       if current_technician.update(confirmation_params)
         session[:technician_confirmed] = true
+        session[:technician_locale] = current_technician.locale
         AuditLog.create!(
           technician: current_technician, actor: "technician", event_type: "details_confirmed_at_login",
           details: { region: current_technician.region, locale: current_technician.locale }
         )
-        redirect_to technician_interventions_path, notice: "Thanks, you're all set."
+        redirect_to technician_interventions_path, notice: t("technician.confirmation.success")
       else
         flash.now[:alert] = current_technician.errors.full_messages.join(", ")
         render :new, status: :unprocessable_entity

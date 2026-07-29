@@ -3,6 +3,8 @@ module TechnicianPortal
   # entirely separate from the PM interface (which has no auth in this
   # MVP — see SPEC.md section 3 for that assumption).
   class BaseController < ApplicationController
+    include TechnicianLocalizable
+
     layout "technician"
     before_action :require_technician_login
 
@@ -14,7 +16,7 @@ module TechnicianPortal
     helper_method :current_technician
 
     def require_technician_login
-      redirect_to technician_login_path, alert: "Please log in." unless current_technician
+      redirect_to technician_login_path, alert: t("technician.interventions.please_log_in") unless current_technician
     end
 
     # Every login requires a fresh confirm-phone-and-language step (see
@@ -22,7 +24,7 @@ module TechnicianPortal
     # The flag is session-scoped, so it's naturally reset on each new login.
     def require_confirmed_session
       return if session[:technician_confirmed]
-      redirect_to technician_confirm_path, alert: "Please confirm your details first."
+      redirect_to technician_confirm_path, alert: t("technician.confirmation.required_first")
     end
   end
 end

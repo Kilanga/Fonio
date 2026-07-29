@@ -1,5 +1,7 @@
 module TechnicianPortal
   class SessionsController < ApplicationController
+    include TechnicianLocalizable
+
     layout "technician"
     before_action :throttle_login!, only: :create
 
@@ -14,7 +16,7 @@ module TechnicianPortal
         log_in(technician)
         redirect_to technician_confirm_path
       else
-        flash.now[:alert] = "Incorrect phone, password, or code."
+        flash.now[:alert] = t("technician.login.incorrect")
         render :new, status: :unprocessable_entity
       end
     end
@@ -31,7 +33,7 @@ module TechnicianPortal
       key = "throttle:technician_login:#{request.remote_ip}:#{params[:phone]}"
       return unless rate_limited?(key, limit: 5, period: 1.minute)
 
-      flash.now[:alert] = "Too many attempts — please wait a minute and try again."
+      flash.now[:alert] = t("technician.login.too_many_attempts")
       render :new, status: :too_many_requests
     end
 
@@ -46,6 +48,10 @@ module TechnicianPortal
     def log_in(technician)
       session[:technician_id] = technician.id
       session[:technician_confirmed] = nil # always re-confirm on a fresh login
+      # Persists across logins (only reset if they change it in the confirm
+      # step) — so a returning technician gets their language immediately,
+      # even before they've re-confirmed this session.
+      session[:technician_locale] = technician.locale if technician.locale.present?
     end
   end
 end

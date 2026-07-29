@@ -19,16 +19,16 @@ module TechnicianPortal
         intervention: @intervention, technician: current_technician,
         actor: "technician", event_type: "intervention_accepted"
       )
-      redirect_to technician_intervention_path(@intervention), notice: "Accepted. Tap \"I've started\" once you're on site."
+      redirect_to technician_intervention_path(@intervention), notice: t("technician.interventions.accepted_flash")
     end
 
     def start_intervention
       unless @intervention.accepted_at?
-        redirect_to technician_intervention_path(@intervention), alert: "Please accept the intervention first."
+        redirect_to technician_intervention_path(@intervention), alert: t("technician.interventions.accept_first")
         return
       end
       @intervention.start!
-      redirect_to technician_interventions_path, notice: "Started — we'll check in with you in 30 minutes."
+      redirect_to technician_interventions_path, notice: t("technician.interventions.started_flash")
     end
 
     private
