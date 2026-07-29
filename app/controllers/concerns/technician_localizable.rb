@@ -13,12 +13,40 @@
 module TechnicianLocalizable
   extend ActiveSupport::Concern
 
+  # Every language CALL-E supports across its recipient regions (see
+  # CallESupportedRegions) — shown in the UI language switcher in each
+  # language's own name, the standard convention for language pickers.
+  # UI translations exist for all of these; any technician.locale we
+  # don't have a translation for yet (there are none left, but this is
+  # the extension point) falls back to English rather than raising.
+  LOCALE_NAMES = {
+    en: "English",
+    fr: "Français",
+    hi: "हिन्दी",
+    ar: "العربية",
+    vi: "Tiếng Việt",
+    de: "Deutsch",
+    ja: "日本語",
+    es: "Español",
+    pt: "Português"
+  }.freeze
+
+  RTL_LOCALES = %i[ar].freeze
+
   included do
     around_action :use_technician_locale
-    helper_method :current_technician_locale
+    helper_method :current_technician_locale, :technician_locale_options, :technician_text_direction
   end
 
   private
+
+  def technician_locale_options
+    I18n.available_locales.map { |code| [LOCALE_NAMES.fetch(code, code.to_s), code] }
+  end
+
+  def technician_text_direction(locale = current_technician_locale)
+    RTL_LOCALES.include?(locale) ? "rtl" : "ltr"
+  end
 
   def use_technician_locale(&block)
     I18n.with_locale(current_technician_locale, &block)

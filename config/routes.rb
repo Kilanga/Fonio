@@ -48,6 +48,8 @@ Rails.application.routes.draw do
 
     post "login_code", to: "login_codes#create"
 
+    patch "locale", to: "ui_locales#update"
+
     get  "activate/:token", to: "activations#new",    as: :activation
     post "activate/:token", to: "activations#create"
 

@@ -1,5 +1,7 @@
 fr:
   technician:
+    nav:
+      language_label: "Langue"
     login:
       title: "Fonio — Connexion technicien"
       code_heading: "Connexion par code SMS"

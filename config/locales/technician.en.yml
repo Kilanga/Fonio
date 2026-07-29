@@ -1,5 +1,7 @@
 en:
   technician:
+    nav:
+      language_label: "Language"
     login:
       title: "Fonio — Technician login"
       code_heading: "Log in with a text code"

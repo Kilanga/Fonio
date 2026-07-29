@@ -47,8 +47,13 @@ class ReportsController < ApplicationController
   def use_technician_locale(&block)
     raw = @call&.intervention&.technician&.locale
     lang = raw.to_s.split("-").first&.downcase&.to_sym
-    locale = lang && I18n.available_locales.include?(lang) ? lang : I18n.default_locale
-    I18n.with_locale(locale, &block)
+    @report_locale = lang && I18n.available_locales.include?(lang) ? lang : I18n.default_locale
+    I18n.with_locale(@report_locale, &block)
+  end
+  helper_method :report_text_direction
+
+  def report_text_direction
+    TechnicianLocalizable::RTL_LOCALES.include?(@report_locale) ? "rtl" : "ltr"
   end
 
   def find_call_by_token
