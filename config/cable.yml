@@ -5,6 +5,11 @@ test:
   adapter: test
 
 production:
-  adapter: redis
-  url: <%= ENV.fetch("REDIS_URL") { "redis://localhost:6379/1" } %>
-  channel_prefix: fonio_production
+  # async (in-process) rather than redis: the Gemfile doesn't include the
+  # redis gem, and for a single-dyno hackathon demo there's no need for a
+  # separate pub/sub backend — async keeps Turbo Streams broadcasting
+  # working without an extra Heroku add-on. If this ever runs on more than
+  # one web dyno, switch back to redis (uncomment `gem "redis"` in the
+  # Gemfile and add the Heroku Redis add-on) since async doesn't share
+  # state across processes.
+  adapter: async
