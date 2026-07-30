@@ -15,8 +15,14 @@
       </div>
       <% if technician.activated? %>
         <span class="text-sm text-green-700">Active — consent given <%= technician.consent_given_at.strftime("%b %-d, %Y") %></span>
+      <% elsif technician.activation_token_valid? %>
+        <div class="text-right">
+          <span class="text-sm text-amber-700 block mb-1">Awaiting activation</span>
+          <input readonly onclick="this.select()" value="<%= technician_activation_url(token: technician.activation_token, host: default_host) %>"
+                 class="text-xs border border-slate-200 rounded px-2 py-1 w-64 text-slate-500">
+        </div>
       <% else %>
-        <span class="text-sm text-amber-700">Awaiting activation (technician hasn't set up their account yet)</span>
+        <span class="text-sm text-slate-400">Activation link expired</span>
       <% end %>
     </div>
   <% end %>

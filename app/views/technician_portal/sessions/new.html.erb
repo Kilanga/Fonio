@@ -1,15 +1,6 @@
 <h1 class="text-xl font-semibold mb-6 text-center"><%= t("technician.login.title") %></h1>
 
 <div class="bg-white border border-slate-200 rounded-lg p-4 mb-4">
-  <p class="text-sm font-medium mb-1"><%= t("technician.login.code_heading") %></p>
-  <p class="text-xs text-slate-500 mb-3"><%= t("technician.login.code_subheading") %></p>
-
-  <%= form_with url: technician_login_code_path, method: :post, class: "flex gap-2 mb-4" do %>
-    <input type="tel" name="phone" placeholder="+33..." required autocomplete="tel"
-           class="flex-1 border border-slate-300 rounded-md px-3 py-2 text-base">
-    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap"><%= t("technician.login.send_code") %></button>
-  <% end %>
-
   <%= form_with url: technician_login_path, method: :post, class: "space-y-3" do %>
     <div>
       <label class="block text-sm font-medium mb-1"><%= t("technician.login.phone_number") %></label>
@@ -17,20 +8,10 @@
              class="w-full border border-slate-300 rounded-md px-3 py-2 text-base">
     </div>
     <div>
-      <label class="block text-sm font-medium mb-1"><%= t("technician.login.code_received") %></label>
-      <input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="<%= t("technician.login.code_placeholder") %>"
+      <label class="block text-sm font-medium mb-1"><%= t("technician.login.password") %></label>
+      <input type="password" name="password" required autocomplete="current-password"
              class="w-full border border-slate-300 rounded-md px-3 py-2 text-base">
     </div>
-
-    <details class="pt-1">
-      <summary class="text-sm text-slate-500 cursor-pointer"><%= t("technician.login.password_toggle") %></summary>
-      <div class="mt-3">
-        <label class="block text-sm font-medium mb-1"><%= t("technician.login.password") %></label>
-        <input type="password" name="password" autocomplete="current-password"
-               class="w-full border border-slate-300 rounded-md px-3 py-2 text-base">
-        <p class="text-xs text-slate-400 mt-1"><%= t("technician.login.password_hint") %></p>
-      </div>
-    </details>
 
     <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-md text-sm font-medium mt-3"><%= t("technician.login.submit") %></button>
   <% end %>

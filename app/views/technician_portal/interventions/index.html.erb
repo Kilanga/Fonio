@@ -13,6 +13,9 @@
   <%= link_to technician_intervention_path(intervention), class: "block bg-white border border-slate-200 rounded-lg p-4 mb-3" do %>
     <p class="font-semibold"><%= intervention.site_name %></p>
     <p class="text-sm text-blue-600 mt-1"><%= t("technician.interventions.in_progress") %></p>
+    <% if intervention.reminder_sent_at? %>
+      <p class="text-sm text-amber-700 mt-1"><%= t("technician.interventions.overdue_notice") %></p>
+    <% end %>
   <% end %>
 <% end %>
 

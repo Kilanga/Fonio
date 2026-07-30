@@ -18,15 +18,15 @@ late-reported anomaly can mean an SLA penalty or a delayed job.
 A PM-facing web app that uses CALL-E to:
 1. **Automatically call the technician 30 minutes after an intervention starts**, to confirm
    they've actually started, that there's no blocker, and to capture any need for help.
-2. **Call the technician to collect a spoken closing report**, triggered by a "DONE" SMS sent
-   by the technician to a dedicated number — removing the chore of manually typing up a
-   report. The technician can still review/edit the transcribed report afterward via a secure
-   link (Kizeo-style), including attaching photos.
+2. **Call the technician to collect a spoken closing report**, triggered by the technician
+   tapping "I'm done" in their portal — removing the chore of manually typing up a report.
+   The technician can still review/edit the transcribed report afterward via a secure link
+   (Kizeo-style), including attaching photos.
 3. **Call the PM twice a day (noon and evening) with a spoken, interactive summary** of
    interventions handled in that half-day window — not just a read-out: for each flagged
    item the PM can decide right on the call to mark it resolved or have a short instruction
-   texted to the technician, and gets an SMS confirming whatever was applied. Only placed if
-   there's actually something to report in that window.
+   relayed to the technician (shown in their portal). Only placed if there's actually
+   something to report in that window.
 
 The PM tracks everything from a web interface with live updates, search/filtering, a
 synthesis dashboard, CSV export, and a full audit log of every call and status change.
@@ -36,9 +36,10 @@ synthesis dashboard, CSV export, and a full audit log of every call and status c
 - **PM**: the only user of the web interface. Registers technicians (with explicit consent),
   starts interventions, reviews results, handles anomalies, receives the daily summary call.
   Single-PM assumption for this MVP (no multi-user auth).
-- **Technician**: never uses the web app. Interacts only by phone (receives CALL-E calls),
-  by SMS ("DONE" to close out, reminder texts), and via a no-login secure link to edit their
-  closing report.
+- **Technician**: receives CALL-E calls, and uses a lightweight mobile-first portal
+  (`/technician/...`, own phone+password login) to accept/start interventions, mark one as
+  done, see check-in results, PM messages, and overdue reminders, plus a no-login secure link
+  to edit their closing report.
 
 ## 4. Data model
 
@@ -56,7 +57,7 @@ class Intervention < ApplicationRecord
   # site_name:string, site_address:string
   # scheduled_at:datetime, started_at:datetime
   # expected_end_time:datetime          -- used for the overdue-reminder check
-  # reminder_sent_at:datetime           -- ensures the reminder SMS fires only once
+  # reminder_sent_at:datetime           -- ensures the in-app reminder banner fires only once
   # completed_at:datetime               -- used for resolution-time metrics
   enum status: {
     pending: 0,
@@ -123,9 +124,9 @@ pending
           └─ no_answer → retry at +5min
               ├─ answered → (same branches as above)
               └─ no_answer → call_failed
-      → (overdue reminder, if expected_end_time passed and before 7pm, "DONE" not yet received)
-          → one reminder SMS sent (reminder_sent_at set, never repeated)
-      → ("DONE" SMS received) → closing_in_progress
+      → (overdue reminder, if expected_end_time passed and before 7pm, not marked done yet)
+          → one in-app reminder banner set (reminder_sent_at set, never repeated)
+      → (technician taps "I'm done" in their portal) → closing_in_progress
           → [closing_report call] → report in "draft" state
               → (technician validates via secure link, or 2h timeout)
                   → completed | action_required (if is_anomaly_severe)
@@ -134,10 +135,9 @@ call_failed → (PM handles manually) → completed | in_progress
 no_show → (PM handles manually, e.g. reschedules) → in_progress | completed
 ```
 
-Duplicate "DONE" SMS handling: the webhook only acts on a technician's *current* `in_progress`
-intervention. A second "DONE" SMS finds no matching `in_progress` intervention (it has already
-moved to `closing_in_progress`/beyond) and is logged as `sms_ignored_duplicate` in the audit
-log rather than triggering a second closing call.
+"I'm done" only acts on a technician's *current* `in_progress` intervention (enforced by the
+`finish` action in `TechnicianPortal::InterventionsController`), so it can't be triggered twice
+for the same intervention once it has moved to `closing_in_progress`/beyond.
 
 ## 6. Call scripts (decision trees)
 
@@ -161,7 +161,7 @@ structured-result schema.
        └─ Close
 ```
 
-### Closing report call (triggered by "DONE" SMS)
+### Closing report call (triggered by "I'm done" in the technician portal)
 ```
 1. Greeting + confirm "Are you done at [site]?"
 2. "What work did you complete today?" (work_completed, open)
@@ -291,20 +291,25 @@ payload yet.
 
 **Change of design**: technicians now have their own account and log into a
 separate, mobile-first section of the app — they are no longer purely
-phone/SMS-only as originally scoped. This gives a stronger, self-asserted
+phone-only as originally scoped. This gives a stronger, self-asserted
 consent and lets the technician (not the PM) confirm their own phone number
 and preferred language.
 
-**Auth**: phone + password (`has_secure_password`). A one-time SMS code is
-also available as a login fallback / password reset path — no separate
-account recovery flow needed beyond that.
+There is no SMS/Twilio dependency anywhere in this app (dropped after
+discovering US carrier compliance for SMS — A2P 10DLC / toll-free
+verification — requires either a US/Canada address or a registered
+business, neither of which this hackathon project has). Every touchpoint
+that would otherwise be an SMS instead lives in the technician's portal.
+
+**Auth**: phone + password only (`has_secure_password`).
 
 **Account activation (replaces PM-driven consent)**: when the PM adds a
-technician (name + phone), the system sends an SMS with a secure activation
-link. The technician sets their own password there. Completing activation
-*is* their consent to receive AI-initiated calls/texts — a stronger, self
--asserted signal than a PM checkbox on their behalf. `Technician#consent_given`
-is now set by this action, not by the PM.
+technician (name + phone), Fonio generates a secure activation link, shown
+directly in the PM's technician list for them to share however they like.
+The technician sets their own password there. Completing activation *is*
+their consent to receive AI-initiated calls — a stronger, self-asserted
+signal than a PM checkbox on their behalf. `Technician#consent_given` is set
+by this action, not by the PM.
 
 **Confirm-at-login**: every time a technician logs in, before seeing
 anything else, they're shown their phone number and current preferred
@@ -342,29 +347,29 @@ end
 
 | Event | Trigger | Mechanism |
 |---|---|---|
-| Technician onboarded | PM adds technician + confirms consent | `POST /technicians` (consent screen, mandatory checkbox) |
+| Technician onboarded | PM adds technician; technician activates their own account | `POST /technicians` + `POST /technician/activate/:token` (activation *is* consent, see section 3bis) |
 | Intervention starts | PM button (simulates field trigger) | `POST /interventions/:id/start` |
 | Check-in call | Automatic, T+30min after start | `CheckInCallJob` |
 | Check-in result | CALL-E → our server | Webhook `POST /webhooks/call_e` |
 | Retry on no-answer | Automatic, +5min after failed attempt | `CheckInCallJob` re-enqueued, `attempt: 2` |
-| Overdue reminder | Recurring check (every ~30min), expected_end_time passed, before 7pm | `OverdueReminderCheckJob` → SMS via Twilio |
-| Intervention ends | Technician SMS to dedicated number | Webhook `POST /webhooks/sms_technician` (dedup-aware) |
-| Closing report call | Automatic, on "DONE" SMS receipt | `ClosingReportCallJob` |
+| Overdue reminder | Recurring check (every ~30min), expected_end_time passed, before 7pm | `OverdueReminderCheckJob` → in-app banner in the technician portal |
+| Intervention ends | Technician taps "I'm done" in their portal | `POST /technician/interventions/:id/finish` (dedup-aware — only acts on the current `in_progress` intervention) |
+| Closing report call | Automatic, on "I'm done" | `ClosingReportCallJob` |
 | Closing report result | CALL-E → our server | Webhook `POST /webhooks/call_e` (same endpoint, distinguished by `call_type`) |
 | Report auto-validation | 2h after draft creation, if untouched | `ValidateReportAutomaticallyJob` |
 | Daily summary calls | Recurring, noon and 6pm | `DailySummaryCallJob(period)` |
 | Live UI update | On every relevant webhook | `Turbo::StreamsChannel.broadcast_replace_to` |
 | Audit logging | On every event above | `AuditLog.create!` alongside each state change |
 
-Recurring jobs (`OverdueReminderCheckJob`, `DailySummaryCallJob`) are scheduled via the
-`whenever` gem (cron-style) or the Heroku Scheduler add-on.
+Recurring jobs (`OverdueReminderCheckJob`, `DailySummaryCallJob`) are scheduled via Solid
+Queue's built-in recurring tasks (`config/recurring.yml`) — no separate scheduler add-on.
 
 ## 9. Interface
 
 **Tabs**
 1. **Pending** — scheduled interventions + "Start" button
 2. **In Progress** — cards with countdown to check-in call, live call status, "awaiting
-   closing" badge once the SMS is received
+   closing" badge once the technician taps "I'm done" in their portal
 3. **Tracking** — sortable/filterable by status, severity, technician, and site; search bar;
    each card expands to show full call history (not just the latest), the closing report,
    and attached photos
@@ -376,9 +381,10 @@ Recurring jobs (`OverdueReminderCheckJob`, `DailySummaryCallJob`) are scheduled 
 - CSV export button (interventions + linked closing report fields)
 
 **Technician management**
-- List/add technicians, each with a mandatory consent screen before a phone number can be
-  used to place calls or send texts: *"I confirm this technician has been informed and
-  consents to receiving AI-initiated phone calls and texts."*
+- List/add technicians. A phone number can't be called until the technician has activated
+  their own portal account — that activation step is their consent (see section 3bis). The
+  PM's technician list shows the activation link (to share manually) for anyone not yet
+  activated.
 
 **Audit log view**
 - Simple chronological table (event_type, actor, intervention, timestamp, details) for
@@ -389,9 +395,9 @@ Recurring jobs (`OverdueReminderCheckJob`, `DailySummaryCallJob`) are scheduled 
 
 - No answer on check-in call → 1 automatic retry 5 min later, then `call_failed`
 - Technician confirms they haven't started → `no_show`, PM handles manually
-- Duplicate "DONE" SMS → logged as ignored, no duplicate closing call triggered
-- SMS from an unrecognized number → silently ignored (logged in audit log)
-- Reminder SMS fires at most once per intervention, never after 7pm
+- "I'm done" can't be tapped twice — the button only exists while the intervention is
+  `in_progress`, and the controller re-checks that server-side
+- Reminder banner fires at most once per intervention, never after 7pm
 - One technician = one `in_progress` intervention at a time (simplifying assumption,
   documented)
 - No external notification (Slack/email) for escalation — visual only, in the Tracking tab
@@ -401,23 +407,24 @@ Recurring jobs (`OverdueReminderCheckJob`, `DailySummaryCallJob`) are scheduled 
 
 - **Rails** (Hotwire/Turbo for live updates, no separate SPA)
 - **PostgreSQL**
-- **ActiveJob** (Solid Queue or Sidekiq) for scheduled/retry jobs
+- **ActiveJob** (Solid Queue, DB-backed — no Redis) for scheduled/retry jobs
 - **ActiveStorage** for photo attachments on closing reports
-- **whenever** gem or Heroku Scheduler for recurring jobs (reminders, daily summary)
-- **CALL-E** (API/SDK) for outbound calls — isolated in a `CallEClient` wrapper class
-- **Twilio** (or equivalent) for the closing SMS and reminder SMS
-- **Deployment**: Heroku or Render (Starter tier), auto-deploy from GitHub — must stay
-  accessible through the end of the judging period (October 13, 2026)
+- **Solid Queue recurring tasks** (`config/recurring.yml`) for reminders and the daily summary
+- **CALL-E** (API/SDK) for outbound calls — isolated in a `CallEClient` wrapper class, the
+  only external service this app depends on
+- **Deployment**: Heroku, auto-deploy from GitHub — must stay accessible through the end of
+  the judging period (October 13, 2026)
 
 ## 12. MVP scope (all features below are now in scope, per project decision)
 
 - 3 tracking tabs + dashboard + search/filter + CSV export
 - Both technician-facing call types + the daily PM summary call, all actually executed via
   CALL-E at runtime
-- Technician model with mandatory consent screen
+- Technician portal with self-asserted consent via account activation
 - Full call history per intervention (not just latest)
-- Duplicate SMS detection, no_show status, call_failed + retry
-- Overdue reminder SMS (pre-7pm cutoff)
+- "I'm done" dedup (only the current `in_progress` intervention), no_show status, call_failed
+  + retry
+- Overdue reminder banner in the technician portal (pre-7pm cutoff)
 - Report editing via secure link, with photo upload
 - Full audit log across all events
 - Live updates via Turbo Streams
@@ -440,8 +447,8 @@ any contribution including apps): reviewed in full and aligned —
   number's country code (an earlier auto-suggestion feature was removed
   for this reason).
 - Phone numbers are masked in all user-facing views (technicians list,
-  intervention detail/cards); only the actual SMS/call-sending code paths
-  use the unmasked number.
+  intervention detail/cards); only the actual call-placing code path
+  uses the unmasked number.
 - Every intervention has a clear cancellation path (`cancel!`) before any
   call is placed, satisfying their "every setup must include cancellation
   instructions" guidance — enforced on our side via job status checks,

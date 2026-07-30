@@ -49,7 +49,7 @@ gem "image_processing", "~> 1.2"
 
 # Schedule recurring jobs (overdue reminder check, daily summary call) via cron
 
-# HTTP client used by the CallEClient and SmsClient wrappers
+# HTTP client used by the CallEClient wrapper
 gem "httparty"
 
 # Persistent job queue (DB-backed, no Redis needed) — required since our jobs

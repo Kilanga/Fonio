@@ -1,11 +1,9 @@
 class ApplicationController < ActionController::Base
   protected
 
-  # Lets you curl the webhooks locally without a real Twilio/CALL-E
-  # signature, e.g. to test the "technician texts DONE" flow without a
-  # live Twilio number. Deliberately unavailable outside development, so
-  # it can never be mistakenly left on somewhere reachable from the
-  # internet.
+  # Lets you curl the CALL-E webhook locally without a real signature.
+  # Deliberately unavailable outside development, so it can never be
+  # mistakenly left on somewhere reachable from the internet.
   def skip_webhook_signature_check?
     Rails.env.development? && ENV["SKIP_WEBHOOK_SIGNATURE_CHECK"] == "true"
   end

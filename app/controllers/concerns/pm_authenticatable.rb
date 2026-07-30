@@ -4,8 +4,8 @@
 # wide open to anyone with the URL — see SPEC.md section 3.
 #
 # NOT included on: ReportsController (public tokenized link for
-# technicians), Webhooks::* (called by CALL-E/Twilio, verified by
-# signature instead), TechnicianPortal::* (has its own session auth).
+# technicians), Webhooks::* (called by CALL-E, verified by signature
+# instead), TechnicianPortal::* (has its own session auth).
 #
 # Set PM_AUTH_USER / PM_AUTH_PASSWORD in .env. Falls back to a default
 # dev-only credential so the app still boots without configuration, but

@@ -153,33 +153,12 @@ module Webhooks
         actor: "system", event_type: "status_changed", details: { new_status: new_status }
       )
 
-      # There's no review/edit step on check-in results the way there is
-      # for closing reports (SPEC.md section 7) — a misheard "blocking"
-      # vs "minor" would otherwise go straight to the PM unchecked. A
-      # confirmation text is a much lighter safety net than a full web
-      # form, and only fires when something was actually flagged so a
-      # routine "all good" check-in doesn't get an SMS.
-      send_check_in_confirmation(call, intervention) if call.has_issue? || call.needs_help?
-    end
-
-    def send_check_in_confirmation(call, intervention)
-      summary = [
-        call.issue_type.present? ? "issue: #{call.issue_type.humanize.downcase}" : nil,
-        call.severity.present? ? "severity: #{call.severity}" : nil,
-        call.needs_help? ? "help requested" : nil
-      ].compact.join(", ")
-
-      SmsClient.send_sms(
-        to: intervention.technician.phone,
-        body: "Fonio noted from your check-in call: #{summary}. " \
-              "If that's wrong, please call your PM directly to correct it."
-      )
-    rescue SmsClient::SmsError => e
-      Rails.logger.error("Failed to send check-in confirmation for call=#{call.id}: #{e.message}")
-      AuditLog.create!(
-        intervention: intervention, actor: "system", event_type: "sms_error",
-        details: { context: "check_in_confirmation", error: e.message }
-      )
+      # There's no SMS confirmation step here (there used to be, before we
+      # dropped the Twilio dependency) — a misheard "blocking" vs "minor"
+      # would otherwise go straight to the PM unchecked. Instead the
+      # technician sees the flagged issue directly in their portal
+      # (technician_portal/interventions#show reads has_issue?/needs_help?
+      # off the latest check-in Call) the next time they open the app.
     end
 
     def apply_closing_report_result(call, result)
@@ -195,20 +174,9 @@ module Webhooks
 
       ValidateReportAutomaticallyJob.set(wait: 2.hours).perform_later(call)
 
-      # Send the technician their edit link right away
-      begin
-        SmsClient.send_sms(
-          to: call.intervention.technician.phone,
-          body: "Here's your closing report to review or edit: " \
-                "#{Rails.application.routes.url_helpers.edit_report_url(token: call.edit_token, host: default_host)}"
-        )
-      rescue SmsClient::SmsError => e
-        Rails.logger.error("Failed to send report edit link for call=#{call.id}: #{e.message}")
-        AuditLog.create!(
-          intervention: call.intervention, actor: "system", event_type: "sms_error",
-          details: { context: "report_edit_link", error: e.message }
-        )
-      end
+      # The technician sees the "review your report" link directly in their
+      # portal (technician_portal/interventions#show) next time they open
+      # the app — no SMS needed.
     end
 
     def handle_daily_summary(payload)
@@ -234,9 +202,9 @@ module Webhooks
       return unless decisions.is_a?(Array) && decisions.any?
 
       flagged = summary.flagged_interventions.to_a
-      applied = decisions.filter_map { |decision| apply_daily_summary_decision(summary, flagged, decision) }
-
-      send_daily_summary_confirmation(summary, applied) if applied.any?
+      decisions.filter_map { |decision| apply_daily_summary_decision(summary, flagged, decision) }
+      # No SMS confirmation back to the PM — they were just on the phone,
+      # and the dashboard already reflects the changes live via Turbo Streams.
     end
 
     def apply_daily_summary_decision(summary, flagged, decision)
@@ -268,10 +236,12 @@ module Webhooks
         broadcast_update(intervention)
         { intervention: intervention, action: action }
       when "text_technician"
+        # No longer sent via SMS — logged here, and the technician sees it
+        # as a "message from your PM" banner in their portal
+        # (technician_portal/interventions#show reads this exact event type).
         instruction = decision["instruction"].to_s
         return nil if instruction.blank?
 
-        SmsClient.send_sms(to: intervention.technician.phone, body: "Message from your PM: #{instruction}")
         AuditLog.create!(
           intervention: intervention, technician: intervention.technician,
           actor: "pm", event_type: "instruction_sent_to_technician",
@@ -281,29 +251,6 @@ module Webhooks
       else
         nil # "no_action", or an action we don't recognize — nothing to do
       end
-    rescue SmsClient::SmsError => e
-      Rails.logger.error("Failed to send PM instruction from daily summary call=#{summary.id}: #{e.message}")
-      AuditLog.create!(
-        intervention: intervention, actor: "system", event_type: "sms_error",
-        details: { context: "daily_summary_instruction", error: e.message }
-      )
-      nil
-    end
-
-    def send_daily_summary_confirmation(summary, applied)
-      lines = applied.map do |a|
-        case a[:action]
-        when "mark_resolved" then "Marked \"#{a[:intervention].site_name}\" resolved."
-        when "text_technician" then "Texted #{a[:intervention].technician.name}: \"#{a[:instruction]}\""
-        end
-      end.compact
-
-      SmsClient.send_sms(
-        to: summary.pm_phone,
-        body: "From your Fonio call just now — #{lines.join(' ')} Reply or check the dashboard if anything's wrong."
-      )
-    rescue SmsClient::SmsError => e
-      Rails.logger.error("Failed to send daily summary confirmation for summary=#{summary.id}: #{e.message}")
     end
 
     def broadcast_update(intervention)

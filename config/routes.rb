@@ -33,7 +33,6 @@ Rails.application.routes.draw do
 
   namespace :webhooks do
     post "call_e", to: "call_e#create"
-    post "sms_technician", to: "sms_technician#create"
   end
 
   # Technician-facing account area — separate auth from the PM interface
@@ -45,8 +44,6 @@ Rails.application.routes.draw do
     get  "login",  to: "sessions#new"
     post "login",  to: "sessions#create"
     delete "logout", to: "sessions#destroy"
-
-    post "login_code", to: "login_codes#create"
 
     patch "locale", to: "ui_locales#update"
 
@@ -61,6 +58,7 @@ Rails.application.routes.draw do
       member do
         post :accept
         post :start_intervention
+        post :finish
       end
     end
   end
