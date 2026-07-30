@@ -97,6 +97,40 @@ daily summary call) are scheduled via Solid Queue's built-in recurring tasks
 Per the hackathon rules, this deployment must stay accessible through the
 end of the judging period (October 13, 2026).
 
+## SMS/voice opt-in & consent
+
+Technicians never self-serve sign up for SMS/calls. The flow is:
+
+1. The PM adds a technician (name + phone) from the web app.
+2. Fonio immediately sends a one-time SMS with a secure activation link
+   (e.g. *"Hi Marc, set up your Fonio account here: https://.../activate/abc123"*).
+3. The technician opens the link and sets a password to activate their
+   account. **Completing this activation step is the technician's own,
+   self-asserted consent** to receive operational SMS and AI-initiated phone
+   calls from Fonio related to their assigned field interventions —
+   `Technician#consent_given` is only set once this step is completed, not
+   by the PM on their behalf. See `SPEC.md`, sections 9 and 11.
+
+No phone number is called or texted before this consent step is complete.
+Recipients (technicians and the PM) can reply **STOP** at any time to stop
+receiving messages, or **HELP** for support.
+
+Examples of the outbound SMS Fonio sends, all tied to a specific
+intervention or account action (never marketing):
+
+- Account activation link (see above)
+- One-time login code: *"Your Fonio login code: 483920 (valid 10 minutes)"*
+- Post check-in-call confirmation, only sent if an issue was flagged:
+  *"Fonio noted from your check-in call: issue: broken pump, severity: high.
+  If that's wrong, please call your PM directly to correct it."*
+- Closing report review link: *"Here's your closing report to review or
+  edit: https://.../reports/xyz/edit"*
+- Overdue check-in reminder: *"Hi Marc, just checking in on the intervention
+  at Site A — text DONE once you've finished, or call us if you need more
+  time."*
+- PM-relayed instruction: *"Message from your PM: bring extra filters
+  tomorrow"*
+
 ## Important notes
 
 - **Consent**: technicians must be explicitly marked as consenting before
