@@ -17,6 +17,19 @@ class CheckInCallJob < ApplicationJob
       )
       return
     end
+
+    # If the PM or the technician already triggered an early check-in
+    # (Intervention#trigger_check_in_call!), the originally-scheduled
+    # T+30min attempt-1 job would otherwise place a redundant second call.
+    if attempt == 1 && intervention.calls.type_check_in.exists?
+      AuditLog.create!(
+        intervention: intervention, technician: intervention.technician,
+        actor: "system", event_type: "check_in_skipped",
+        details: { reason: "already triggered manually before the scheduled call", attempt: attempt }
+      )
+      return
+    end
+
     return unless intervention.technician.consent_given? # safety net, see SPEC.md section 9
     return unless intervention.technician.region.present? && intervention.technician.locale.present?
 

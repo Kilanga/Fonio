@@ -73,6 +73,8 @@ ar:
       already_claimed_alert: "شخص آخر تولى هذا التدخّل بالفعل."
       others_heading: "تدخّلات الفنيين الآخرين"
       taken_by: "مُسند إلى %{name}"
+      request_check_in_button: "طلب مكالمة متابعة الآن"
+      check_in_requested_flash: "تم الطلب — سنتصل بك قريبًا."
     report:
       title: "تقرير تدخّلك"
       heading: "راجع تقريرك"

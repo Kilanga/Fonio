@@ -12,6 +12,15 @@
   <%= render "interventions/status_badge", intervention: @intervention %>
 </div>
 
+<% if @intervention.in_progress? %>
+  <div class="mb-6">
+    <%= button_to "Trigger check-in call now", trigger_check_in_intervention_path(@intervention), method: :post,
+          form: { data: { controller: "submit-once", action: "submit->submit-once#submitting" } },
+          class: "bg-blue-600 text-white text-sm px-3 py-2 rounded-md" %>
+    <span class="text-xs text-slate-400 ml-2">Skips the T+30min wait — won't double-call later.</span>
+  </div>
+<% end %>
+
 <div class="bg-white border border-slate-200 rounded-lg p-4 mb-6">
   <p class="font-medium mb-2">Timeline</p>
   <ul class="text-sm space-y-1 text-slate-600">

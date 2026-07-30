@@ -73,6 +73,8 @@ vi:
       already_claimed_alert: "Người khác đã nhận can thiệp này rồi."
       others_heading: "Can thiệp của kỹ thuật viên khác"
       taken_by: "Đã giao cho %{name}"
+      request_check_in_button: "Yêu cầu gọi kiểm tra ngay"
+      check_in_requested_flash: "Đã yêu cầu — chúng tôi sẽ sớm gọi cho bạn."
     report:
       title: "Báo cáo can thiệp của bạn"
       heading: "Xem lại báo cáo của bạn"

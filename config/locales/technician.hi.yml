@@ -73,6 +73,8 @@ hi:
       already_claimed_alert: "किसी और ने पहले ही यह हस्तक्षेप ले लिया है।"
       others_heading: "अन्य तकनीशियनों के हस्तक्षेप"
       taken_by: "%{name} को सौंपा गया"
+      request_check_in_button: "अभी जांच कॉल का अनुरोध करें"
+      check_in_requested_flash: "अनुरोध किया गया — हम जल्द ही आपको कॉल करेंगे।"
     report:
       title: "आपकी हस्तक्षेप रिपोर्ट"
       heading: "अपनी रिपोर्ट की समीक्षा करें"

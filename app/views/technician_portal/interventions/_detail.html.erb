@@ -1,0 +1,55 @@
+<%= turbo_frame_tag "technician_intervention_detail_#{intervention.id}" do %>
+  <% if pm_messages.present? %>
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+      <p class="text-sm font-medium text-amber-800 mb-2"><%= t("technician.interventions.pm_messages_heading") %></p>
+      <% pm_messages.each do |log| %>
+        <p class="text-sm text-amber-900 mb-1">“<%= log.details["instruction"] %>”</p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if check_in_call && (check_in_call.has_issue? || check_in_call.needs_help?) %>
+    <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+      <p class="text-sm font-medium text-orange-800 mb-1"><%= t("technician.interventions.check_in_heading") %></p>
+      <p class="text-sm text-orange-900">
+        <% if check_in_call.issue_type.present? %>
+          <%= t("technician.interventions.check_in_issue", type: check_in_call.issue_type.humanize) %>
+        <% end %>
+        <% if check_in_call.severity.present? %>
+          · <%= t("technician.interventions.check_in_severity", severity: check_in_call.severity) %>
+        <% end %>
+      </p>
+      <p class="text-xs text-orange-700 mt-1"><%= t("technician.interventions.check_in_hint") %></p>
+    </div>
+  <% end %>
+
+  <% if closing_report_call %>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+      <p class="text-sm font-medium text-blue-800 mb-2"><%= t("technician.interventions.report_ready_heading") %></p>
+      <%= link_to t("technician.interventions.report_ready_link"),
+            edit_report_path(token: closing_report_call.edit_token),
+            class: "inline-block bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium" %>
+    </div>
+  <% end %>
+
+  <% if intervention.in_progress? %>
+    <p class="text-blue-700 text-sm font-medium mb-3"><%= t("technician.interventions.in_progress_notice") %></p>
+    <%= button_to t("technician.interventions.finish_button"), finish_technician_intervention_path(intervention), method: :post,
+          form: { data: { controller: "submit-once", action: "submit->submit-once#submitting" } },
+          class: "w-full bg-green-600 text-white py-2.5 rounded-md text-sm font-medium" %>
+    <%= button_to t("technician.interventions.request_check_in_button"), request_check_in_technician_intervention_path(intervention), method: :post,
+          form: { data: { controller: "submit-once", action: "submit->submit-once#submitting" } },
+          class: "w-full bg-white border border-blue-300 text-blue-700 py-2.5 rounded-md text-sm font-medium mt-2" %>
+  <% elsif intervention.closing_in_progress? %>
+    <p class="text-sm text-green-700"><%= t("technician.interventions.closing_in_progress_notice") %></p>
+  <% elsif !intervention.accepted_at? %>
+    <%= button_to t("technician.interventions.accept_button"), accept_technician_intervention_path(intervention), method: :post,
+          form: { data: { controller: "submit-once", action: "submit->submit-once#submitting" } },
+          class: "w-full bg-blue-600 text-white py-2.5 rounded-md text-sm font-medium" %>
+  <% else %>
+    <p class="text-sm text-green-700 mb-3"><%= t("technician.interventions.accepted_notice") %></p>
+    <%= button_to t("technician.interventions.start_button"), start_intervention_technician_intervention_path(intervention), method: :post,
+          form: { data: { controller: "submit-once", action: "submit->submit-once#submitting" } },
+          class: "w-full bg-slate-900 text-white py-2.5 rounded-md text-sm font-medium" %>
+  <% end %>
+<% end %>

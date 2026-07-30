@@ -96,6 +96,7 @@ module Webhooks
       end
 
       broadcast_update(call.intervention)
+      broadcast_technician_detail(call.intervention)
     end
 
     # CALL-E's beta contract may send call_status values we haven't seen
@@ -247,6 +248,7 @@ module Webhooks
           actor: "pm", event_type: "instruction_sent_to_technician",
           details: { instruction: instruction, via: "daily_summary_call", daily_summary_call_id: summary.id }
         )
+        broadcast_technician_detail(intervention)
         { intervention: intervention, action: action, instruction: instruction }
       else
         nil # "no_action", or an action we don't recognize — nothing to do
@@ -259,6 +261,28 @@ module Webhooks
         target: "intervention_#{intervention.id}",
         partial: "interventions/card",
         locals: { intervention: intervention }
+      )
+    end
+
+    # Live-updates the technician's own intervention detail page (check-in
+    # results, PM messages, report-ready link) so they don't have to
+    # manually reload to see it.
+    def broadcast_technician_detail(intervention)
+      technician = intervention.technician
+      return unless technician
+
+      check_in_call = intervention.calls.type_check_in.order(created_at: :desc).first
+      closing_report_call = intervention.calls.type_closing_report.report_draft.order(created_at: :desc).first
+      pm_messages = intervention.audit_logs.where(event_type: "instruction_sent_to_technician").order(created_at: :desc)
+
+      Turbo::StreamsChannel.broadcast_replace_to(
+        [technician, "interventions"],
+        target: "technician_intervention_detail_#{intervention.id}",
+        partial: "technician_portal/interventions/detail",
+        locals: {
+          intervention: intervention, pm_messages: pm_messages,
+          check_in_call: check_in_call, closing_report_call: closing_report_call
+        }
       )
     end
 

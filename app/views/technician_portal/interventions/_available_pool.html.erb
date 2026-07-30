@@ -1,0 +1,14 @@
+<%= turbo_frame_tag "technician_available_pool" do %>
+  <% if available.present? %>
+    <h2 class="text-sm font-medium text-slate-500 mb-2 mt-6"><%= t("technician.interventions.available_heading") %></h2>
+    <% available.each do |intervention| %>
+      <div class="bg-white border border-dashed border-blue-300 rounded-lg p-4 mb-3">
+        <p class="font-semibold"><%= intervention.site_name %></p>
+        <p class="text-sm text-slate-500"><%= intervention.scheduled_at.strftime("%b %-d, %H:%M") %></p>
+        <%= button_to t("technician.interventions.claim_button"), claim_technician_intervention_path(intervention), method: :post,
+              form: { data: { controller: "submit-once", action: "submit->submit-once#submitting" } },
+              class: "mt-2 w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium" %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

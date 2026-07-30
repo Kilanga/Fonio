@@ -73,6 +73,8 @@ de:
       already_claimed_alert: "Jemand anderes hat diesen Einsatz bereits übernommen."
       others_heading: "Einsätze anderer Techniker"
       taken_by: "Zugewiesen an %{name}"
+      request_check_in_button: "Jetzt einen Kontrollanruf anfordern"
+      check_in_requested_flash: "Angefordert — wir rufen Sie in Kürze an."
     report:
       title: "Ihr Einsatzbericht"
       heading: "Überprüfen Sie Ihren Bericht"

@@ -73,6 +73,8 @@ en:
       already_claimed_alert: "Someone already claimed this intervention."
       others_heading: "Other technicians' interventions"
       taken_by: "Assigned to %{name}"
+      request_check_in_button: "Request a check-in call now"
+      check_in_requested_flash: "Requested — we'll call you shortly."
     report:
       title: "Your intervention report"
       heading: "Review your report"

@@ -73,6 +73,8 @@ pt:
       already_claimed_alert: "Outra pessoa já assumiu esta intervenção."
       others_heading: "Intervenções de outros técnicos"
       taken_by: "Atribuída a %{name}"
+      request_check_in_button: "Solicitar uma ligação de acompanhamento agora"
+      check_in_requested_flash: "Solicitada — ligaremos em breve."
     report:
       title: "Seu relatório de intervenção"
       heading: "Revise seu relatório"

@@ -1,7 +1,9 @@
 module TechnicianPortal
   class InterventionsController < BaseController
+    include BroadcastsAvailablePool
+
     before_action :require_confirmed_session
-    before_action :find_intervention, only: [:show, :accept, :start_intervention, :finish]
+    before_action :find_intervention, only: [:show, :accept, :start_intervention, :finish, :request_check_in]
     before_action :find_open_intervention, only: [:claim]
 
     def index
@@ -67,9 +69,21 @@ module TechnicianPortal
       redirect_to technician_intervention_path(@intervention), notice: t("technician.interventions.finish_flash")
     end
 
+    # Lets the technician ask for a check-in call sooner than the T+30min
+    # default — e.g. they need to flag a blocker to the PM right away
+    # instead of waiting.
+    def request_check_in
+      if @intervention.trigger_check_in_call!(actor: "technician")
+        redirect_to technician_intervention_path(@intervention), notice: t("technician.interventions.check_in_requested_flash")
+      else
+        redirect_to technician_intervention_path(@intervention), alert: t("technician.interventions.finish_not_ready")
+      end
+    end
+
     # Self-service pickup from the shared pool (see Intervention#claim!).
     def claim
       if @intervention.claim!(current_technician)
+        broadcast_available_pool
         redirect_to technician_intervention_path(@intervention), notice: t("technician.interventions.claimed_flash")
       else
         redirect_to technician_interventions_path, alert: t("technician.interventions.already_claimed_alert")

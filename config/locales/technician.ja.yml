@@ -73,6 +73,8 @@ ja:
       already_claimed_alert: "この対応はすでに他の担当者が引き受けています。"
       others_heading: "他の技術者の対応案件"
       taken_by: "%{name} が担当"
+      request_check_in_button: "今すぐ確認の電話をリクエスト"
+      check_in_requested_flash: "リクエストしました — まもなくお電話します。"
     report:
       title: "対応レポート"
       heading: "レポートを確認する"

@@ -5,7 +5,11 @@
 class DailySummaryCallJob < ApplicationJob
   queue_as :default
 
-  def perform(period, date = Date.current)
+  # force: true skips the "nothing to report" guard — used by the PM's
+  # manual "trigger recap call now" button (DashboardController), so a
+  # judge testing outside the noon/6pm schedule can still see the
+  # interactive recap call in action.
+  def perform(period, date = Date.current, force: false)
     start_hour, end_hour = DailySummaryCall::WINDOWS.fetch(period)
     window_start = date.beginning_of_day + start_hour.hours
     window_end   = date.beginning_of_day + end_hour.hours
@@ -13,9 +17,9 @@ class DailySummaryCallJob < ApplicationJob
     interventions = Intervention.where(started_at: window_start...window_end).to_a
     # Not just "did anything start in this window" — an intervention that's
     # still in_progress (or was cancelled) has nothing to tell the PM yet.
-    # Only call if there's something actually reportable.
+    # Only call if there's something actually reportable (unless forced).
     reportable = interventions.select { |i| i.status.in?(DailySummaryCall::FLAGGED_STATUSES + ["completed"]) }
-    return if reportable.empty?
+    return if reportable.empty? && !force
 
     pm = Pm.first
     unless pm

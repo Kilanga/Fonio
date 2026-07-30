@@ -7,6 +7,7 @@ Rails.application.routes.draw do
     member do
       post :cancel
       post :resolve # PM marks action_required / call_failed / no_show as handled
+      post :trigger_check_in
     end
     collection do
       get :pending
@@ -25,6 +26,7 @@ Rails.application.routes.draw do
   resource :pm_profile, only: [:new, :create, :edit, :update], controller: "pm_profile"
 
   get "dashboard", to: "dashboard#show"
+  post "dashboard/trigger_daily_summary", to: "dashboard#trigger_daily_summary", as: :dashboard_trigger_daily_summary
   get "audit_logs", to: "audit_logs#index"
 
   # Public, tokenized, no-login report editing page for technicians
@@ -60,6 +62,7 @@ Rails.application.routes.draw do
         post :start_intervention
         post :finish
         post :claim
+        post :request_check_in
       end
     end
   end

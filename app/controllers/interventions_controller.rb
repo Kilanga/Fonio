@@ -2,6 +2,7 @@ require "csv"
 
 class InterventionsController < ApplicationController
   include PmAuthenticatable
+  include BroadcastsAvailablePool
 
   def pending
     @interventions = Intervention.pending.includes(:technician).order(:scheduled_at)
@@ -47,6 +48,7 @@ class InterventionsController < ApplicationController
         intervention: @intervention, technician: @intervention.technician,
         actor: "pm", event_type: "intervention_created"
       )
+      broadcast_available_pool if @intervention.technician_id.nil?
       redirect_to pending_interventions_path, notice: "Intervention scheduled."
     else
       @technicians = Technician.where(consent_given: true).order(:name)
@@ -73,6 +75,19 @@ class InterventionsController < ApplicationController
       actor: "pm", event_type: "manually_resolved"
     )
     redirect_to tracking_interventions_path, notice: "Marked as resolved."
+  end
+
+  # Bypasses the T+30min wait — mainly so judges/demo viewers don't have to
+  # sit around for the scheduled check-in call to see CALL-E in action.
+  # CheckInCallJob itself guards against the originally-scheduled call
+  # firing a second time afterward.
+  def trigger_check_in
+    @intervention = Intervention.find(params[:id])
+    if @intervention.trigger_check_in_call!(actor: "pm")
+      redirect_to intervention_path(@intervention), notice: "Check-in call triggered."
+    else
+      redirect_to intervention_path(@intervention), alert: "This intervention isn't in progress."
+    end
   end
 
   def export

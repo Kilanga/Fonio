@@ -16,7 +16,7 @@
   </div>
 </div>
 
-<div class="bg-white border border-slate-200 rounded-lg p-4">
+<div class="bg-white border border-slate-200 rounded-lg p-4 mb-6">
   <p class="font-medium mb-3">By status</p>
   <ul class="space-y-2">
     <% @status_counts.each do |status, count| %>
@@ -26,4 +26,19 @@
       </li>
     <% end %>
   </ul>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-lg p-4">
+  <p class="font-medium mb-1">Trigger PM recap call now</p>
+  <p class="text-xs text-slate-500 mb-3">
+    Skips the noon/6pm schedule (and the "nothing to report" check) — useful for demos.
+  </p>
+  <div class="flex gap-2">
+    <%= button_to "Trigger morning recap", dashboard_trigger_daily_summary_path(period: "morning"), method: :post,
+          form: { data: { controller: "submit-once", action: "submit->submit-once#submitting" } },
+          class: "bg-slate-900 text-white text-sm px-3 py-2 rounded-md" %>
+    <%= button_to "Trigger afternoon recap", dashboard_trigger_daily_summary_path(period: "afternoon"), method: :post,
+          form: { data: { controller: "submit-once", action: "submit->submit-once#submitting" } },
+          class: "bg-slate-900 text-white text-sm px-3 py-2 rounded-md" %>
+  </div>
 </div>

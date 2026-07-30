@@ -50,6 +50,24 @@ class Intervention < ApplicationRecord
     CheckInCallJob.set(wait: 30.minutes).perform_later(self)
   end
 
+  # Places a check-in call right now instead of waiting for the scheduled
+  # T+30min one — either the PM wants an update sooner, or the technician
+  # themselves needs to flag something to the PM early (see
+  # TechnicianPortal::InterventionsController#request_check_in). The
+  # originally-scheduled job still fires later, but CheckInCallJob skips it
+  # when attempt 1 already happened, so this never double-calls.
+  def trigger_check_in_call!(actor:)
+    return false unless in_progress?
+
+    next_attempt = calls.type_check_in.count + 1
+    AuditLog.create!(
+      intervention: self, technician: technician, actor: actor,
+      event_type: "check_in_requested", details: { attempt: next_attempt }
+    )
+    CheckInCallJob.perform_later(self, attempt: next_attempt)
+    true
+  end
+
   # Every scheduled call action (CheckInCallJob, ClosingReportCallJob) checks
   # the intervention's current status before placing any call, so cancelling
   # here reliably prevents an already-enqueued job from actually calling —

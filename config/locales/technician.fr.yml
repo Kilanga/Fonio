@@ -73,6 +73,8 @@ fr:
       already_claimed_alert: "Quelqu'un d'autre a déjà pris cette intervention."
       others_heading: "Interventions des autres techniciens"
       taken_by: "Assignée à %{name}"
+      request_check_in_button: "Demander un appel de point maintenant"
+      check_in_requested_flash: "Demandé — nous vous appellerons bientôt."
     report:
       title: "Votre rapport d'intervention"
       heading: "Vérifiez votre rapport"
