@@ -67,6 +67,12 @@ fr:
       check_in_hint: "Si c'est incorrect, appelez directement votre PM pour corriger."
       report_ready_heading: "Votre rapport de clôture est prêt"
       report_ready_link: "Vérifier ou modifier votre rapport"
+      available_heading: "Disponibles à prendre"
+      claim_button: "Prendre cette intervention"
+      claimed_flash: "Prise en charge — vous pouvez la démarrer une fois sur site."
+      already_claimed_alert: "Quelqu'un d'autre a déjà pris cette intervention."
+      others_heading: "Interventions des autres techniciens"
+      taken_by: "Assignée à %{name}"
     report:
       title: "Votre rapport d'intervention"
       heading: "Vérifiez votre rapport"

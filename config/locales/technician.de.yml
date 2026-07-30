@@ -67,6 +67,12 @@ de:
       check_in_hint: "Falls das nicht stimmt, rufen Sie Ihren PM direkt an, um es zu korrigieren."
       report_ready_heading: "Ihr Abschlussbericht ist bereit"
       report_ready_link: "Bericht prüfen oder bearbeiten"
+      available_heading: "Verfügbar zur Übernahme"
+      claim_button: "Diesen Einsatz übernehmen"
+      claimed_flash: "Übernommen — Sie können ihn starten, sobald Sie vor Ort sind."
+      already_claimed_alert: "Jemand anderes hat diesen Einsatz bereits übernommen."
+      others_heading: "Einsätze anderer Techniker"
+      taken_by: "Zugewiesen an %{name}"
     report:
       title: "Ihr Einsatzbericht"
       heading: "Überprüfen Sie Ihren Bericht"

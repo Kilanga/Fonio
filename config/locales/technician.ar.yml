@@ -67,6 +67,12 @@ ar:
       check_in_hint: "إذا كان هذا غير صحيح، اتصل بمديرك مباشرة لتصحيحه."
       report_ready_heading: "تقرير الإغلاق جاهز"
       report_ready_link: "مراجعة أو تعديل تقريرك"
+      available_heading: "متاحة للتولي"
+      claim_button: "تولَّ هذا التدخّل"
+      claimed_flash: "تم التولي — يمكنك بدؤه بمجرد وصولك إلى الموقع."
+      already_claimed_alert: "شخص آخر تولى هذا التدخّل بالفعل."
+      others_heading: "تدخّلات الفنيين الآخرين"
+      taken_by: "مُسند إلى %{name}"
     report:
       title: "تقرير تدخّلك"
       heading: "راجع تقريرك"

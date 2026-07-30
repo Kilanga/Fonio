@@ -67,6 +67,12 @@ vi:
       check_in_hint: "Nếu thông tin này sai, hãy gọi trực tiếp cho PM của bạn để sửa."
       report_ready_heading: "Báo cáo kết thúc của bạn đã sẵn sàng"
       report_ready_link: "Xem lại hoặc chỉnh sửa báo cáo của bạn"
+      available_heading: "Có thể nhận"
+      claim_button: "Nhận can thiệp này"
+      claimed_flash: "Đã nhận — bạn có thể bắt đầu khi có mặt tại hiện trường."
+      already_claimed_alert: "Người khác đã nhận can thiệp này rồi."
+      others_heading: "Can thiệp của kỹ thuật viên khác"
+      taken_by: "Đã giao cho %{name}"
     report:
       title: "Báo cáo can thiệp của bạn"
       heading: "Xem lại báo cáo của bạn"

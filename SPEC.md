@@ -287,6 +287,21 @@ responses trigger a short technical retry rather than counting against the
 check-in retry budget) — both defensive, unconfirmed against a real
 payload yet.
 
+## 3ter. Intervention assignment: direct or shared pool
+
+An intervention can be assigned two ways:
+- **Direct**: the PM picks a specific technician in the dropdown when scheduling it (as
+  originally scoped) — only that technician sees it.
+- **Shared pool**: the PM leaves it unassigned ("— Unassigned —" option). Every technician
+  sees it in their portal under "Available to claim" and can tap to claim it first-come,
+  first-served (`Intervention#claim!`, row-locked so two simultaneous claims can't both
+  succeed). Once claimed it disappears from the pool and appears — read-only, greyed out,
+  card only, no detail page — under "Other technicians' interventions" for everyone else, so
+  a technician always has visibility into what the rest of the team is doing without being
+  able to act on it.
+
+`Intervention#technician_id` is nullable to support the unassigned state.
+
 ## 3bis. Technician accounts (redesign)
 
 **Change of design**: technicians now have their own account and log into a

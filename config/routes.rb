@@ -59,6 +59,7 @@ Rails.application.routes.draw do
         post :accept
         post :start_intervention
         post :finish
+        post :claim
       end
     end
   end

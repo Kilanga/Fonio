@@ -87,7 +87,7 @@ class InterventionsController < ApplicationController
       interventions.each do |i|
         report = i.calls.find { |c| c.call_type == "closing_report" }
         rows << [
-          i.site_name, i.technician.name, i.status, i.scheduled_at, i.started_at, i.completed_at,
+          i.site_name, i.technician&.name || "Unassigned", i.status, i.scheduled_at, i.started_at, i.completed_at,
           i.resolution_time_minutes, report&.work_completed, report&.equipment_used,
           report&.anomalies, report&.is_anomaly_severe, report&.recommendations
         ]

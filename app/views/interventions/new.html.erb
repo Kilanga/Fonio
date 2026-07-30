@@ -7,7 +7,9 @@
   <%= form_with model: @intervention, class: "max-w-lg space-y-4" do |f| %>
     <div>
       <label class="block text-sm font-medium mb-1">Technician</label>
-      <%= f.collection_select :technician_id, @technicians, :id, :name, {}, class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
+      <%= f.collection_select :technician_id, @technicians, :id, :name,
+            { include_blank: "— Unassigned (open to any technician to claim) —" },
+            class: "w-full border border-slate-300 rounded-md px-3 py-2" %>
     </div>
     <div>
       <label class="block text-sm font-medium mb-1">Site name</label>

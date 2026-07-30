@@ -1,7 +1,13 @@
 <div class="flex justify-between items-start mb-6">
   <div>
     <h1 class="text-xl font-semibold"><%= @intervention.site_name %></h1>
-    <p class="text-slate-500 text-sm"><%= @intervention.technician.name %> · <%= masked_phone(@intervention.technician.phone) %></p>
+    <p class="text-slate-500 text-sm">
+      <% if @intervention.technician %>
+        <%= @intervention.technician.name %> · <%= masked_phone(@intervention.technician.phone) %>
+      <% else %>
+        <span class="text-amber-700">Unassigned — open to any technician</span>
+      <% end %>
+    </p>
   </div>
   <%= render "interventions/status_badge", intervention: @intervention %>
 </div>

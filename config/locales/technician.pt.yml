@@ -67,6 +67,12 @@ pt:
       check_in_hint: "Se isso estiver errado, ligue diretamente para o seu PM para corrigir."
       report_ready_heading: "Seu relatório de encerramento está pronto"
       report_ready_link: "Revisar ou editar seu relatório"
+      available_heading: "Disponíveis para assumir"
+      claim_button: "Assumir esta intervenção"
+      claimed_flash: "Assumida — você pode iniciá-la assim que estiver no local."
+      already_claimed_alert: "Outra pessoa já assumiu esta intervenção."
+      others_heading: "Intervenções de outros técnicos"
+      taken_by: "Atribuída a %{name}"
     report:
       title: "Seu relatório de intervenção"
       heading: "Revise seu relatório"

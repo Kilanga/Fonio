@@ -23,7 +23,7 @@
         <summary class="cursor-pointer flex justify-between items-center">
           <span>
             <span class="font-semibold"><%= intervention.site_name %></span>
-            <span class="text-slate-500 text-sm ml-2"><%= intervention.technician.name %></span>
+            <span class="text-slate-500 text-sm ml-2"><%= intervention.technician&.name || "Unassigned" %></span>
           </span>
           <%= render "interventions/status_badge", intervention: intervention %>
         </summary>

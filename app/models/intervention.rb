@@ -1,5 +1,8 @@
 class Intervention < ApplicationRecord
-  belongs_to :technician
+  # optional: true — a PM can create an intervention without assigning a
+  # technician, leaving it open for any technician to claim from the
+  # shared pool (see #claim! and TechnicianPortal::InterventionsController).
+  belongs_to :technician, optional: true
   has_many :calls, dependent: :destroy
   has_many :audit_logs, dependent: :nullify
 
@@ -21,6 +24,25 @@ class Intervention < ApplicationRecord
     in_progress.where(reminder_sent_at: nil).where.not(expected_end_time: nil)
       .where("expected_end_time < ?", Time.current)
   }
+
+  scope :available_to_claim, -> { pending.where(technician_id: nil) }
+
+  # A technician picks this up from the shared pool themselves, instead of
+  # being assigned by the PM. Locks the row so two technicians tapping
+  # "claim" at the same moment can't both succeed.
+  def claim!(technician)
+    return false unless pending?
+
+    with_lock do
+      return false unless technician_id.nil?
+      update!(technician: technician)
+    end
+    AuditLog.create!(
+      intervention: self, technician: technician,
+      actor: "technician", event_type: "intervention_claimed"
+    )
+    true
+  end
 
   def start!
     update!(status: "in_progress", started_at: Time.current)

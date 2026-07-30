@@ -67,6 +67,12 @@ ja:
       check_in_hint: "内容が間違っている場合は、PMに直接お電話で修正をお伝えください。"
       report_ready_heading: "完了報告書の準備ができました"
       report_ready_link: "報告書を確認・編集する"
+      available_heading: "対応可能な案件"
+      claim_button: "この対応を引き受ける"
+      claimed_flash: "引き受けました — 現場に到着したら開始できます。"
+      already_claimed_alert: "この対応はすでに他の担当者が引き受けています。"
+      others_heading: "他の技術者の対応案件"
+      taken_by: "%{name} が担当"
     report:
       title: "対応レポート"
       heading: "レポートを確認する"

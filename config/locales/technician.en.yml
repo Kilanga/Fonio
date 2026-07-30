@@ -67,6 +67,12 @@ en:
       check_in_hint: "If this is wrong, call your PM directly to correct it."
       report_ready_heading: "Your closing report is ready"
       report_ready_link: "Review or edit your report"
+      available_heading: "Available to claim"
+      claim_button: "Claim this intervention"
+      claimed_flash: "Claimed — you can start it once you're on site."
+      already_claimed_alert: "Someone already claimed this intervention."
+      others_heading: "Other technicians' interventions"
+      taken_by: "Assigned to %{name}"
     report:
       title: "Your intervention report"
       heading: "Review your report"
